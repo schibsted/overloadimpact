@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <!-- ... -->
+    <script>
+      var current_timestamp = -1;
+
+      function refreshReport() {
+          var s = document.createElement("script");
+          s.src = "timestamp.js";
+          document.body.appendChild(s);
+          console.log("report_timestamp", report_timestamp);
+          if (report_done) { // navigate to complete_report
+              var complete_url = window.location.href.replace("runtime_report", "complete_report");
+              location.replace(complete_url);
+          }
+
+          if (report_timestamp > current_timestamp) {
+              current_timestamp = report_timestamp;
+              var embed = document.getElementById("load_svg");
+              embed.src = "load.svg?" + new Date().getTime();
+              var embed = document.getElementById("duration_svg");
+              embed.src = "duration.svg?" + new Date().getTime();
+              var embed = document.getElementById("active_svg");
+              embed.src = "active.svg?" + new Date().getTime();
+          }
+      }
+      setInterval(refreshReport, 3000);
+    </script>
+  </head>
+  <body>
+    <figure>
+      <embed width="700px" id="load_svg" type="image/svg+xml" src="load.svg" />
+    </figure>
+    <figure>
+      <embed width="700px" id="duration_svg" type="image/svg+xml" src="duration.svg" />
+    <figure>
+      <embed width="700px" id="active_svg" type="image/svg+xml" src="active.svg" />
+    </figure>
+    </figure>
+  </body>
+</html>
