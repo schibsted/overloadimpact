@@ -28,11 +28,11 @@ SCENARIOS_CODE_DIR = SUITE_DIR + "/lua/scenarios"
 SUITE_LIB_DIR = SUITE_DIR + "/lua/lib"
 COMMON_LIB_DIR = os.path.abspath(BASE_DIR + '/../lua/lib')
 
-CONFIGS_FILE   = SUITE_DIR + '/config/configs.yaml'
-SCENARIOS_FILE = SUITE_DIR + '/config/scenarios.yaml'
-TARGETS_FILE   = SUITE_DIR + '/config/targets.yaml'
-PROGRAMS_PATH    = SUITE_DIR + '/config/programs/%s.yaml'
-SEQUENCE_PATH  = SUITE_DIR + '/config/sequences/%s.yaml'
+CONFIGS_FILE   = SUITE_DIR + '/suite_config/configs.yaml'
+SCENARIOS_FILE = SUITE_DIR + '/suite_config/scenarios.yaml'
+TARGETS_FILE   = SUITE_DIR + '/suite_config/targets.yaml'
+PROGRAMS_PATH    = SUITE_DIR + '/suite_config/programs/%s.yaml'
+SEQUENCE_PATH  = SUITE_DIR + '/suite_config/sequences/%s.yaml'
 
 RUNS_DIR = determine_run_data_dir()
 
