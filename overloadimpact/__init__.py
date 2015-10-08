@@ -36,16 +36,16 @@ def main():
       Controls loadimpact tests
 
     USAGE:
-      loadimpact sequence         [NAME] [RUN_DESCRIPTION]
-      loadimpact program         [NAME] [RUN_DESCRIPTION]
-      loadimpact config        [NAME]
-      loadimpact scenario      [NAME]
-      loadimpact update        [NAME]
-      loadimpact target        [NAME]
-      loadimpact report program  [ACTION] [PROGRAM_RUN_ID]
-      loadimpact report config [ACTION] [RUN_ID] [TITLE]
-      loadimpact method        [NAME] [ARGS ...]
-      loadimpact help
+      oimp sequence         [NAME] [RUN_DESCRIPTION]
+      oimp program         [NAME] [RUN_DESCRIPTION]
+      oimp config        [NAME]
+      oimp scenario      [NAME]
+      oimp update        [NAME]
+      oimp target        [NAME]
+      oimp report program  [ACTION] [PROGRAM_RUN_ID]
+      oimp report config [ACTION] [RUN_ID] [TITLE]
+      oimp method        [NAME] [ARGS ...]
+      oimp help
     """
 
     try:

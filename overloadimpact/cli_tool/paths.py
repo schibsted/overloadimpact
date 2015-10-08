@@ -26,7 +26,8 @@ SUITE_DIR = determine_suite_dir()
 
 SCENARIOS_CODE_DIR = SUITE_DIR + "/lua/scenarios"
 SUITE_LIB_DIR = SUITE_DIR + "/lua/lib"
-COMMON_LIB_DIR = os.path.abspath(BASE_DIR + '/../lua/lib')
+COMMON_LIB_DIR = os.path.dirname(os.path.realpath(__file__)) + "../lua/lib"
+# COMMON_LIB_DIR = os.path.abspath(BASE_DIR + '/../lua/lib')
 
 CONFIGS_FILE   = SUITE_DIR + '/suite_config/configs.yaml'
 SCENARIOS_FILE = SUITE_DIR + '/suite_config/scenarios.yaml'

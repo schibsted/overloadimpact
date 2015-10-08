@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(name='overloadimpact',
       version='0.0.4',
-      description='Framework for writing and running tests suites for loadimpact.com.',
+      description='Framework for writing and running tests suites for loadimpact.com, with support for custom lua libraries.',
       url='http://github.schibsted.io/spt-identity/overloadimpact',
       author='Schibsted Products and Technology',
       author_email='someemail@example.com',
@@ -15,7 +15,7 @@ setup(name='overloadimpact',
     # pip to create the appropriate form of executable for the target platform.
     entry_points={
         'console_scripts': [
-            'overloadimpact=overloadimpact:main',
+            'oimp=overloadimpact:main',
         ],
     },
 )
