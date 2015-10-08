@@ -46,7 +46,8 @@ def __configure(program):
                               config_params['users'],
                               config_params['warmup'],
                               config_params.get('stable', 0),
-                              config_params['scenarios'])
+                              config_params['scenarios'],
+                              config_params.get('source-ip-multiplier', None))
 
 def show_programs():
     cols = ['PROGRAM', 'CONFIG', 'USERS', 'WARMUP', 'STABLE', 'SCENARIO', 'USER-PORTION']

@@ -284,6 +284,7 @@ def __find_sample_period(metrics):
     clients_max = 0
     first_max_client_idx = None
     last_max_client_idx = None
+    stable_peak_found = False
     for idx, row in enumerate(clients_active):
         if row['value'] == 0: # should not happen
             continue
@@ -291,11 +292,21 @@ def __find_sample_period(metrics):
             clients_max = row['value']
             first_max_client_idx = idx
         elif row['value'] == clients_max: # found the ceiling?
+            stable_peak_found = True
             last_max_client_idx = idx
             continue
         else: # val < clients_max, scaling down again
+            if not stable_peak_found: # no stable peak level so use lower values
+                last_max_client_idx = idx
             # probably scaling down again
             continue
+
+    # In the case that we never reached a stable roof, then ensure that
+    # last_max_client_idx is at least 4 from the end
+    end_buffer_min_size = 4
+    if last_max_client_idx + end_buffer_min_size >= len(clients_active):
+        last_max_client_idx = len(clients_active) - (end_buffer_min_size + 1)
+
     idx_range = last_max_client_idx - first_max_client_idx
     sample_period_start_idx = __round(first_max_client_idx + math.floor(idx_range * 0.7)) # start from 70% into max_load period
     sample_period_stop_idx = __round(first_max_client_idx + math.floor(idx_range * 0.9)) # stop at 90% into max_load period
@@ -379,6 +390,8 @@ def __scenario_app_page_metrics(scenario_name, metrics, scenario_config):
 
 def scenario_peak_actions_per_sec(scenario_name, metrics, scenario_config):
     app_page_metrics = __scenario_app_page_metrics(scenario_name, metrics, scenario_config)
+    if not app_page_metrics:
+        return []
     sample_period_metrics = __extract_sample_metrics(app_page_metrics, metrics['sample_period'])
     val_field = "avg"
     return __actions_per_sec(sample_period_metrics, metrics, val_field, scenario_config)
@@ -392,6 +405,10 @@ def __scenario_markup(scenario_name, scenario_config, metrics, dest, run_id):
 
     # add summary line here with core results for scenario, create and show scenario chart
     peak_actions_per_sec = scenario_peak_actions_per_sec(scenario_name, metrics, scenario_config)
+    if not peak_actions_per_sec:
+        print("No data found for scenario (%s) %s" % (run_id, scenario_name))
+        markup += "<h3 style=\"font-weight: lighter\">No data found for scenario (%s) %s</h3><br/><br/><br/><br/><br/><br/><br/>" % (run_id, scenario_name)
+        return markup
     peak_actions_per_sec_avg = report.arr_avg(peak_actions_per_sec, "actions_per_sec")
 
     setup_duration_warning = ""
