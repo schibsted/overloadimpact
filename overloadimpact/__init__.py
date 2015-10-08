@@ -86,7 +86,10 @@ def main():
         command.programcmd(args['NAME'], args['RUN_DESCRIPTION'])
 
     elif args['scenario']:
-        command.scenariocmd(args['NAME'])
+        if args['ACTION']:
+            command.scenariocmd(args['ACTION'], args['NAME'])
+        else:
+            exit('You must specify an action and a scenario name. Use oimp scenario validate [name] or oimp scenario update [name].')
 
     elif args['target']:
         command.targetcmd(args['NAME'])

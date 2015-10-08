@@ -36,9 +36,9 @@ def __load_imports(file, code):
         line = match[0]
         name = match[1]
         if "common" in name:
-            lib = '%s/lib/%s.lua' % (paths.COMMON_LIB_DIR, name)
+            lib = '%s/%s.lua' % (paths.COMMON_LIB_DIR, name)
         else:
-            lib = '%s/lib/%s.lua' % (paths.SUITE_LIB_DIR, name)
+            lib = '%s/%s.lua' % (paths.SUITE_LIB_DIR, name)
         if imports.has_key(lib):
             raise RuntimeError(
                 'You already start importing %s in %s.'

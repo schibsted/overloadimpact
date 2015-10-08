@@ -36,10 +36,10 @@ def scenariocmd(action, name):
         else:
             scenario.show_scenarios()
     elif action == "update":
-        scenario.update_some(name)
+        scenario.update(name)
     else:
-        print("""To run scenario:
-oimp scenario run [scenario_name]
+        print("""To validate scenario:
+oimp scenario validate [scenario_name]
 
 To update all scenarios:
 
