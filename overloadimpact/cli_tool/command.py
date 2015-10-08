@@ -3,12 +3,13 @@ import program
 import program_report
 import config_report
 import combined_programs_report
-import code
 import scenario
+import project
 import target
-import test_config
 import sequence
-import method
+import test_config
+import api_method
+import re
 
 def sequencecmd(name, run_description):
     if name:
@@ -28,19 +29,30 @@ def programcmd(name, run_description):
     else:
         program.show_programs()
 
-def scenariocmd(name):
-    if name:
-        scenario.start(name)
+def scenariocmd(action, name):
+    if action == "validate":
+        if name:
+            scenario.validate(name)
+        else:
+            scenario.show_scenarios()
+    elif action == "update":
+        scenario.update_some(name)
     else:
-        scenario.show_scenarios()
+        print("""To run scenario:
+oimp scenario run [scenario_name]
 
-def targetcmd(name):
-    if name:
-        target.start(name)
-    else:
-        target.show_targets()
+To update all scenarios:
 
-def configcmd(name):
+oimp scenario update
+
+To update a scenario:
+
+oimp scenario update [name]""")
+
+def targetcmd():
+    target.show_targets()
+
+def testconfigcmd(name):
     if name:
         configs = test_config.get_configs()
         config  = configs[name]
@@ -57,7 +69,7 @@ def program_reportcmd(action, program_run_id):
     elif action == "combine":
         combined_programs_report.generate(program_run_id.split(','))
     else:
-        print("Generate the report with: bin/loadimpact report program [running/completed/combine] [program_run_name(s)]")
+        print("Generate the report with: oimp report program [running/completed/combine] [program_run_name(s)]")
         program_report.list_runs()
 
 def config_reportcmd(action, run_id, title):
@@ -66,32 +78,15 @@ def config_reportcmd(action, run_id, title):
     if action == "completed":
         config_report.generate_for_completed(run_id, title)
     else:
-        print("Generate the report with: bin/loadimpact report config [running/completed] [program_run_name]")
+        print("Generate the report with: oimp report config [running/completed] [program_run_name]")
         config_report.list_runs()
 
-def methodcmd(name, args):
+def api_methodcmd(name, args):
     if name:
-        print("name:" + repr(name))
-        method.run_method(name, args)
+        api_method.run_method(name, args)
     else:
-        method.show_methods()
+        api_method.show_methods()
 
-def update(name):
-    scenarios = scenario.get_scenarios()
+def setup_project_reportcmd(name, dest_dir):
+    project.setup(re.sub(r'\W+', '', name), dest_dir)
 
-    if name:
-        names = (name,)
-    else:
-        print('Are you sure you want to update all these test scenarios?')
-        print('- ' + '\n- '.join([x for x in scenarios]))
-        print 'Press Ctrl+C to cancel',
-        try:
-            raw_input()
-        except KeyboardInterrupt:
-            exit(1)
-
-        names = scenarios.keys()
-
-    for name in names:
-        config = scenarios[name]
-        code.update(config['id'], name)

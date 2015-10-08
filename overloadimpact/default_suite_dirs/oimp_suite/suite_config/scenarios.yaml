@@ -1,0 +1,14 @@
+---
+
+scenarios:
+  example-scenario-1:
+    id: 9999996
+
+  example-scenario-2:
+    id: 9999997
+
+  example-scenario-3:
+    id: 9999998
+
+  example-scenario-4:
+    id: 9999999

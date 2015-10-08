@@ -1,0 +1,7 @@
+---
+
+sequence:
+  wait: 3
+  programs:
+    - example-program-1
+    - example-program-2

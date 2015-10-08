@@ -1,0 +1,8 @@
+---
+
+configs:
+  example-test-config-1:
+    id: 9999999
+
+  example-test-config-2:
+    id: 9999998

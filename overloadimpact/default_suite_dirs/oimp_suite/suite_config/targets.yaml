@@ -1,0 +1,4 @@
+targets:
+  global_rollout:
+    example-scenario:
+      actions-per-sec: 3500

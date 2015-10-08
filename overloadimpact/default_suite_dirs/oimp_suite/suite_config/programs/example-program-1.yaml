@@ -1,0 +1,21 @@
+---
+configs:
+  example-config-1:
+    users: 1000
+    warmup: 10
+    stable: 5
+    scenarios:
+      example-scenario-1:
+        percent-of-users: 100
+        actions-per-run: 1
+  example-config-1:
+    users: 1000
+    warmup: 10
+    stable: 5
+    scenarios:
+      example-scenario-2:
+        percent-of-users: 70
+        actions-per-run: 1
+      example-scenario-3:
+        percent-of-users: 30
+        actions-per-run: 1

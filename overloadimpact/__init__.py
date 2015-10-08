@@ -36,15 +36,15 @@ def main():
       Controls loadimpact tests
 
     USAGE:
+      oimp setup_project         [NAME] [DEST_DIR]
       oimp sequence         [NAME] [RUN_DESCRIPTION]
       oimp program         [NAME] [RUN_DESCRIPTION]
-      oimp config        [NAME]
-      oimp scenario      [NAME]
-      oimp update        [NAME]
-      oimp target        [NAME]
+      oimp test_config        [NAME]
+      oimp scenario      [ ACTION] [NAME]
       oimp report program  [ACTION] [PROGRAM_RUN_ID]
       oimp report config [ACTION] [RUN_ID] [TITLE]
-      oimp method        [NAME] [ARGS ...]
+      oimp target
+      oimp api_method        [NAME] [ARGS ...]
       oimp help
     """
 
@@ -62,7 +62,13 @@ def main():
     #   else:
     #     command.show()
 
-    if args['sequence']:
+    if args['setup_project']:
+        if args['NAME'] and args['DEST_DIR']:
+            command.setup_project_reportcmd(args['NAME'], args['DEST_DIR'])
+        else:
+            exit('You must specify a project name and a destination directory.')
+
+    elif args['sequence']:
         command.sequencecmd(args['NAME'], args['RUN_DESCRIPTION'])
 
     elif args['config']:
@@ -85,11 +91,9 @@ def main():
     elif args['target']:
         command.targetcmd(args['NAME'])
 
-    elif args['update']:
-        command.update(args['NAME'])
 
     elif args['method']:
-        command.method(args['NAME'], args['ARGS'])
+        command.api_method(args['NAME'], args['ARGS'])
 
     else:
         exit('This is not the command you are looking for.')
