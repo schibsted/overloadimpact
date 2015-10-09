@@ -5,7 +5,7 @@ import config_report
 import target
 import paths
 
-PROGRAM_BASE_DIR = paths.RUNS_DIR + "/combined_program_runs"
+PROGRAM_BASE_DIR = paths.REPORTS_DIR + "/combined_program_runs"
 
 def generate(program_run_ids):
     program_runs = {}

@@ -13,7 +13,8 @@ import math
 import report
 import paths
 
-REPORTS_PATH = paths.RUNS_DIR
+RUNS_PATH = paths.RUNS_DIR
+REPORTS_PATH = paths.REPORTS_DIR
 CONFIG_RUNS_DIR = paths.RUNS_DIR + "/config_runs"
 
 # Make loadimpact class TestResult available in this scope
@@ -194,6 +195,9 @@ def __create_report_files(dir):
     shutil.copyfile(paths.REPORT_TEMPLATES_DIR + "/config_runs/runtime_report.html", dir + "/runtime/runtime_report.html")
     shutil.copyfile(paths.REPORT_TEMPLATES_DIR + "/config_runs/timestamp.js", dir + "/runtime/timestamp.js")
 
+def __run_path(run_id):
+    return RUNS_PATH + "/config_runs/" + repr(run_id)
+
 def __report_path(run_id):
     return REPORTS_PATH + "/config_runs/" + repr(run_id)
 
@@ -203,8 +207,8 @@ def list_runs():
         print dir
 
 def __meta_json_path(run_id):
-    report_path = __report_path(run_id)
-    return report_path + "/meta.json"
+    run_path = __run_path(run_id)
+    return run_path + "/meta.json"
 
 def  __save_meta(run_id, title, config_run):
     file = open(__meta_json_path(run_id), 'w') # Trying to create a new file or open one

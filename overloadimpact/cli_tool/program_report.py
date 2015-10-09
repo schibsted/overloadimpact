@@ -4,11 +4,13 @@ import report
 import json
 import paths
 
-REPORTS_PATH  = paths.RUNS_DIR
+REPORTS_PATH  = paths.REPORTS_DIR
 PROGRAM_BASE_DIR = REPORTS_PATH + "/program_runs"
+RUNS_PATH  = paths.RUNS_DIR
+PROGRAM_RUNS_BASE_DIR = RUNS_PATH + "/program_runs"
 
 def __read_program_run(program_run_id):
-    filepath = PROGRAM_BASE_DIR + "/" + program_run_id + "/program_run.json"
+    filepath = PROGRAM_RUNS_BASE_DIR + "/" + program_run_id + "/program_run.json"
     with open(filepath) as data_file:
         return json.load(data_file)
 
@@ -63,7 +65,7 @@ def __generate(program_run_id, live_run):
     print("Complete report for program:\n" + complete_report_url(program_run_id))
 
 def list_runs():
-    onlydirs = [ d for d in os.listdir(PROGRAM_BASE_DIR) if os.path.isdir(os.path.join(PROGRAM_BASE_DIR, d)) ]
+    onlydirs = [ d for d in os.listdir(PROGRAM_RUNS_BASE_DIR) if os.path.isdir(os.path.join(PROGRAM_RUNS_BASE_DIR, d)) ]
     for dir in onlydirs:
         print dir
 

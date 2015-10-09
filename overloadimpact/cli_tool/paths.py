@@ -11,6 +11,7 @@ def determine_suite_dir():
         return current_path
     raise NameError('OIMP_SUITE dir not found. Set it as OIMP_SUITE_HOME env var, or execute from it\'s root dir.')
 
+
 def determine_run_data_dir():
     if "OIMP_SUITE_RUN_DATA_HOME" in os.environ:
         if os.path.isdir(os.environ["OIMP_SUITE_RUN_DATA_HOME"] + "/runs"):
@@ -20,6 +21,17 @@ def determine_run_data_dir():
     current_path = os.getcwd()
     if os.path.isdir(current_path + "/runs"):
         return current_path + "/runs"
+    raise NameError('OIMP_SUITE_RUN_DATA dir not found. Set it as OIMP_SUITE_RUN_DATA_HOME env var, or execute from it\'s root dir.')
+
+def determine_run_data_reports_dir():
+    if "OIMP_SUITE_RUN_DATA_HOME" in os.environ:
+        if os.path.isdir(os.environ["OIMP_SUITE_RUN_DATA_HOME"] + "/reports"):
+            return os.environ["OIMP_SUITE_RUN_DATA_HOME"] + "/reports"
+        raise NameError('OIMP_SUITE_RUN_DATA dir not found. Set it as OIMP_SUITE_RUN_DATA_HOME env var, or execute from it\'s root dir.')
+    # if we have executed this command from a oimp-suite dir then it will contain /lua/scenarios
+    current_path = os.getcwd()
+    if os.path.isdir(current_path + "/reports"):
+        return current_path + "/reports"
     raise NameError('OIMP_SUITE_RUN_DATA dir not found. Set it as OIMP_SUITE_RUN_DATA_HOME env var, or execute from it\'s root dir.')
 
 SUITE_DIR = determine_suite_dir()
@@ -35,6 +47,7 @@ TARGETS_FILE   = SUITE_DIR + '/suite_config/targets.yaml'
 PROGRAMS_PATH    = SUITE_DIR + '/suite_config/programs/%s.yaml'
 SEQUENCE_PATH  = SUITE_DIR + '/suite_config/sequences/%s.yaml'
 
+REPORTS_DIR = determine_run_data_reports_dir()
 RUNS_DIR = determine_run_data_dir()
 
 REPORT_TEMPLATES_DIR = os.path.dirname(os.path.abspath(__file__)) + "/reports/templates"

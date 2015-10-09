@@ -9,7 +9,6 @@ import paths
 import yaml
 import glob
 
-REPORTS_PATH  = paths.RUNS_DIR
 PROGRAM_BASE_DIR = paths.RUNS_DIR + "/program_runs"
 
 
