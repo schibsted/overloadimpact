@@ -50,26 +50,26 @@ def __configure(program):
                               config_params.get('source-ip-multiplier', None))
 
 def show_programs():
-    cols = ['PROGRAM', 'CONFIG', 'USERS', 'WARMUP', 'STABLE', 'SCENARIO', 'USER-PORTION']
+    cols = ['PROGRAM', 'CONFIG', 'USERS/WARMUP/STABLE']
     rows = []
     names = glob.glob(paths.PROGRAMS_PATH % ('*'))
 
     for program in names:
         name, ext = os.path.splitext(os.path.basename(program))
-        rows.append([name, '', '', '', '', '', ''])
+        rows.append([name, '', '', '', ''])
 
         program = get(name)
         for config_name, config in program["configs"].iteritems():
-            rows.append(['', config_name, config['users'], config['warmup'], config['stable'], '', ''])
+            scenario_names = []
+            rows.append(['', config_name, ("%d/%d/%d" % (config['users'], config['warmup'], config['stable']))])
             for scenario_name in config['scenarios']:
                 scenario = config['scenarios'][scenario_name]
                 users_percent = scenario['percent-of-users']
-                users_percent_str = str(users_percent) + "%"
-                if users_percent < 10:
-                    users_percent_str = "_" + users_percent_str
-                rows.append(['', '', '', '', '', scenario_name, users_percent_str])
+                scenario_names.append("%s (%d%%)" % (scenario_name, users_percent))
+            scenario_list_str = "(%s)" % (', '.join(scenario_names))
+            rows.append(['', '_        scenarios:', scenario_list_str])
             name = ''
-        rows.append(['', '', '', '', '', '', ''])
+        rows.append(['', '', '', '', ''])
 
     print tabulate.tabulate(rows, headers=cols)
 

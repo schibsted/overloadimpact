@@ -14,16 +14,16 @@ import re
 def sequencecmd(name, run_description):
     if name:
         if not run_description:
-            print("Need a run_description to identify program execution, e.g.: '40 web fronts, Redis backend'")
+            print("Add a second argument to describe the program execution, e.g.: '40 web fronts, Redis backend'")
         else:
-            program.start(name, run_description)
+            sequence.start(name, run_description)
     else:
         sequence.show_sequences()
 
 def programcmd(name, run_description):
     if name:
         if not run_description:
-            print("Need a run_description to identify program execution, e.g.: '40 web fronts, Redis backend'")
+            print("Add a second argument to describe the program execution, e.g.: '40 web fronts, Redis backend'")
         else:
             program.start(name, run_description)
     else:
