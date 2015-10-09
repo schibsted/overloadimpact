@@ -23,10 +23,8 @@ function redirect.request(page, location, auto_redirect)
   res = oimp.request(page, {
                         'GET',
                         redirect.prepare_url(page, location),
-                        headers = cookie_headers(),
+                        headers = cookies.cookie_headers(),
                         auto_redirect = auto_redirect,
   })
   return res
 end
-
-

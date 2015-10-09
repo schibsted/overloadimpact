@@ -4,3 +4,4 @@
 --- import common/cookies
 --- import common/redirect
 --- import common/options
+--- import ../config/suite_config

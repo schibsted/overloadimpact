@@ -40,7 +40,7 @@ function cookies.update(res)
   end
 end
 
-function cookies.capture_redirect(page, start_res, capture_key)
+function cookies.capture_redirect(page, start_res, capture_key, destination_regex)
   if cookies.MANUAL_HANDLING then
     local status_code = start_res.status_code
     local next_location = start_res.headers['Location'][1]
@@ -49,7 +49,7 @@ function cookies.capture_redirect(page, start_res, capture_key)
 
     current_res = start_res
 
-    while status_code == 302 and not string.match(next_location, URI_MATCH_REGEX)
+    while status_code == 302 and not string.match(next_location, destination_regex)
     do
       counter = counter + 1
       local page_redirect = page .. '.count.' .. counter
@@ -101,7 +101,7 @@ function cookies.get_global()
 end
 
 function cookies.manual_handling_enabled()
-  return cookie.MANUAL_HANDLING
+  return cookies.MANUAL_HANDLING
 end
 
 function cookies.encoded_global()
