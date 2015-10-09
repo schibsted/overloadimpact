@@ -14,6 +14,7 @@ import report
 import paths
 
 REPORTS_PATH = paths.RUNS_DIR
+CONFIG_RUNS_DIR = paths.RUNS_DIR + "/config_runs"
 
 # Make loadimpact class TestResult available in this scope
 TestResult = loadimpact.resources.TestResult
@@ -26,8 +27,16 @@ USER_LOAD_TIME_KEY='__li_user_load_time'
 def get_enriched_metrics(config_run, title):
     return __enrich_metrics(__get_metrics(config_run, title, False))
 
+def generate_for_completed_by_id(run_id, title):
+    config_run = __get_config_run(run_id)
+    generate_for_completed(config_run, title)
+
 def generate_for_completed(config_run, title):
     __generate(config_run, title, False)
+
+def generate_for_running_by_id(run_id, title):
+    config_run = __get_config_run(run_id)
+    generate_for_running(config_run, title)
 
 def generate_for_running(config_run, title):
     __generate(config_run, title, True)
@@ -188,6 +197,11 @@ def __create_report_files(dir):
 def __report_path(run_id):
     return REPORTS_PATH + "/config_runs/" + repr(run_id)
 
+def list_runs():
+    onlydirs = [ d for d in os.listdir(CONFIG_RUNS_DIR) if os.path.isdir(os.path.join(CONFIG_RUNS_DIR, d)) ]
+    for dir in onlydirs:
+        print dir
+
 def __meta_json_path(run_id):
     report_path = __report_path(run_id)
     return report_path + "/meta.json"
@@ -205,7 +219,7 @@ def __get_title(run_id):
         return meta["title"]
 
 def __get_config_run(run_id):
-    with open(__meta_json_path(run_id), 'r') as f:
+    with open(__meta_json_path(int(run_id)), 'r') as f:
         json_str = f.read()
         meta = json.loads(json_str)
         return meta["config_run"]

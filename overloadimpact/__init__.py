@@ -42,7 +42,7 @@ def main():
       oimp test_config        [NAME]
       oimp scenario      [ ACTION] [NAME]
       oimp report program  [ACTION] [PROGRAM_RUN_ID]
-      oimp report config [ACTION] [RUN_ID] [TITLE]
+      oimp report test_config [ACTION] [RUN_ID] [TITLE]
       oimp target
       oimp api_method        [NAME] [ARGS ...]
       oimp help
@@ -71,16 +71,20 @@ def main():
     elif args['sequence']:
         command.sequencecmd(args['NAME'], args['RUN_DESCRIPTION'])
 
-    elif args['config']:
-        command.configcmd(args['NAME'])
-
     elif args['report']:
         if args['program']:
             command.program_reportcmd(args['ACTION'], args['PROGRAM_RUN_ID'])
-        elif args['config']:
-            command.config_reportcmd(args['ACTION'], args['RUN_ID'], args['TITLE'])
+        elif args['test_config']:
+            if not args['TITLE']:
+                title = "No title"
+            else:
+                title = args['TITLE']
+            command.test_config_reportcmd(args['ACTION'], args['RUN_ID'], title)
         else:
             exit('You need to pick a report type.')
+
+    elif args['test_config']:
+        command.test_configcmd(args['NAME'])
 
     elif args['program']:
         command.programcmd(args['NAME'], args['RUN_DESCRIPTION'])
@@ -92,11 +96,10 @@ def main():
             exit('You must specify an action and a scenario name. Use oimp scenario validate [name] or oimp scenario update [name].')
 
     elif args['target']:
-        command.targetcmd(args['NAME'])
+        command.targetcmd()
 
-
-    elif args['method']:
-        command.api_method(args['NAME'], args['ARGS'])
+    elif args['api_method']:
+        command.api_methodcmd(args['NAME'], args['ARGS'])
 
     else:
         exit('This is not the command you are looking for.')

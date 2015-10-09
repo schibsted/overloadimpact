@@ -52,7 +52,7 @@ oimp scenario update [name]""")
 def targetcmd():
     target.show_targets()
 
-def testconfigcmd(name):
+def test_configcmd(name):
     if name:
         configs = test_config.get_configs()
         config  = configs[name]
@@ -72,11 +72,11 @@ def program_reportcmd(action, program_run_id):
         print("Generate the report with: oimp report program [running/completed/combine] [program_run_name(s)]")
         program_report.list_runs()
 
-def config_reportcmd(action, run_id, title):
+def test_config_reportcmd(action, run_id, title):
     if action == "running":
-        config_report.generate_for_running(run_id, title)
+        config_report.generate_for_running_by_id(run_id, title)
     if action == "completed":
-        config_report.generate_for_completed(run_id, title)
+        config_report.generate_for_completed_by_id(run_id, title)
     else:
         print("Generate the report with: oimp report config [running/completed] [program_run_name]")
         config_report.list_runs()
