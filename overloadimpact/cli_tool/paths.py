@@ -38,4 +38,3 @@ SEQUENCE_PATH  = SUITE_DIR + '/suite_config/sequences/%s.yaml'
 RUNS_DIR = determine_run_data_dir()
 
 REPORT_TEMPLATES_DIR = os.path.dirname(os.path.abspath(__file__)) + "/reports/templates"
-print("REPORT_TEMPLATES_DIR:" + repr(REPORT_TEMPLATES_DIR))
