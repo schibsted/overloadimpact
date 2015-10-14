@@ -133,14 +133,20 @@ function oimp.after(page, res)
   oimp.started[page] = nil
 end
 
-function oimp.request(page, request)
+function oimp.request(page, request, is_core_action)
   local report_results = oimp.should_log()
   request['response_body_bytes'] = request['response_body_bytes'] or oimp_config.RESPONSE_SIZE
   request['report_results'] = report_results
   oimp.tot_requests = oimp.tot_requests + 1
+  if is_core_action then
+    oimp.before("core_action") -- Needed to calculate actions/s for the central part of each test, excluding setup requests
+  end
   oimp.before(page)
   local res = http.request(request)
   oimp.after(page, res)
+  if is_core_action then
+    oimp.after("core_action")
+  end
   oimp.last_request = res
   return res
 end

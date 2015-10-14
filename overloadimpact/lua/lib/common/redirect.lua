@@ -6,7 +6,6 @@ function redirect.prepare_url(page, location)
   local parsed = url.parse(location)
   if parsed.host then
     uri = location
-    oimp.info('Using full URL: ' .. uri)
   else
     uri = oimp_config.TARGET_SERVER
     uri = uri .. location

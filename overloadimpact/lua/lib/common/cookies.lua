@@ -28,7 +28,7 @@ function cookies.encode(cookies)
 end
 
 function cookies.set(key, val)
-  global_cookies[key] = val
+  cookies.global_cookies[key] = val
 end
 
 function cookies.update(res)
