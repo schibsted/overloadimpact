@@ -1,29 +1,21 @@
-# overloadimpact
+# Overloadimpact
 
-Command line tool for interacting with LoadImpact
+Command line tool and framework for writing and running tests suites for loadimpact.com, with support for custom lua libraries.
 
-
-# LoadImpact execution scripts
-
-These scripts sets off collections of loadimpact tests, enabling controlled
-sequencing and parallel execution of different tests, in order to simulate a
-more realistic server load.
+Overloadimpact can fire sets of test_configs, create reports and statistics, and reuse code between test scenarios.
 
 
 ## Installation
 
-Before you install the dependencies make sure you have `virtualenv` installed
-on your machine (you can install it with `pip install virtualenv`). After that
-to install all dependencies you should run:
+### overloadimpact pip module
+
+If you clone from git, you can install the pip module locally by running:
 
 ```
-virtualenv .virtual-env                      # Creates a new virtual env
-source .virtual-env/bin/activate             # Uses this new virtual env
-pip install -r execution/requirements.txt    # Install dependencies in this env
+pip install -e /path/to/overloadimpact
 ```
 
-After you create the new virtual environment you simply need to activate it
-before using the bin tool. Do this by running the 2nd command above.
+### API token environment variable
 
 Before you can run the loadimpact client you also need to set the API token
 by setting the following environment variable:
@@ -37,22 +29,43 @@ Add to your shell profile file to avoid doing this all the time.
 
 ## Usage
 
-Run `./bin/loadimpact` with no arguments to check all available commands.
+### Set up suite dirs
+
+The first time you run oimp you will need to set a suite dir. If you run oimp now you will get:
 
 ```
-$ ./bin/loadimpact
-    USAGE:
-      loadimpact sequence         [NAME] [RUN_DESCRIPTION]
-      loadimpact program         [NAME] [RUN_DESCRIPTION]
-      loadimpact config        [NAME]
-      loadimpact scenario      [NAME]
-      loadimpact update        [NAME]
-      loadimpact target        [NAME]
-      loadimpact report program  [ACTION] [PROGRAM_RUN_ID]
-      loadimpact report config [ACTION] [RUN_ID] [TITLE]
-      loadimpact method        [NAME] [ARGS ...]
-      loadimpact help
+$ oimp
+Traceback (most recent call last):
+NameError: OIMP_SUITE dir not found. Set it as OIMP_SUITE_HOME env var, or execute from it's root dir. You can create a suite by running.
 ```
+
+To fix this create a suite by running:
+
+```
+oimp setup_project foo /path/to/parent_of_foo
+Add OIMP_SUITE_HOME=/path/to/parent_of_foo/foo_oimp_suite and OIMP_SUITE_RUN_DATA_HOME=/path/to/parent_of_foo/foo_oimp_suite_run_data to your environment variables.
+```
+
+Add the environment vars as instructed.
+
+Run `oimp` with no arguments to see all available commands.
+
+```
+$ oimp
+USAGE:
+      oimp setup_project        [NAME] [DEST_DIR]
+      oimp sequence         [NAME] [RUN_DESCRIPTION]
+      oimp program         [NAME] [RUN_DESCRIPTION]
+      oimp test_config        [NAME]
+      oimp scenario      [ ACTION] [NAME]
+      oimp report program  [ACTION] [PROGRAM_RUN_ID]
+      oimp report test_config [ACTION] [RUN_ID] [TITLE]
+      oimp target
+      oimp api_method        [NAME] [ARGS ...]
+      oimp help
+```
+
+### scen
 
 
 ## Troubleshooting
