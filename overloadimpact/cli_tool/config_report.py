@@ -231,6 +231,7 @@ def __get_config_run(run_id):
 def __prepare(run_id):
     report_path = __report_path(run_id)
     try:
+        os.mkdir(__run_path(run_id))
         os.mkdir(report_path)
         os.mkdir(report_path + "/runtime")
         os.mkdir(report_path + "/complete")
