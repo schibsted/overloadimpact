@@ -5,6 +5,7 @@ import liclient
 import tabulate
 import scenario
 import math
+import loadimpact
 
 def get(name):
     with open(paths.PROGRAMS_PATH % (name)) as f:
@@ -33,6 +34,9 @@ def configure(id, users, warmup, stable=0, scenarios=None, source_ip_multiplier=
     if scenarios:
         test_config.config[u'tracks'] = __configure_tracks(test_config, scenarios)
     # specify source ips
+
+    # LoadImpact's own explanation: it's not calculated as expected. Start with the number of VU you want to run in your test, say 1501 and multiply with your factor, say 5 X. That's a sum of 7505. Divide by 500 and you have 15.01. You can' have .01 load generators so it will become 16. Always adjusted upwards when not divisible as a whole by 500.
+
     if not source_ip_multiplier or source_ip_multiplier < 2:
         source_ips = 0
     else:
@@ -74,7 +78,14 @@ def configure(id, users, warmup, stable=0, scenarios=None, source_ip_multiplier=
     test_config.config[u'source_ips'] = source_ips
     print("test_config.config:" + repr(test_config.config))
 
-    test_config.update()
+    # handle strange case where 5 is not accepted, possibly due to too many scenarios
+    if source_ips == 5:
+        try:
+            test_config.update()
+        except loadimpact.exceptions.BadRequestError:
+            print("Failed for source_ips %d" % (source_ips))
+            print("Testing with source_ips %d" % (7))
+            test_config.config[u'source_ips'] = 7
 
     test_config = liclient.client.get_test_config(id)
     load_schedule = test_config.config['load_schedule']
