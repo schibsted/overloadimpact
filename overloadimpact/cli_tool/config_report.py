@@ -1,4 +1,5 @@
 import shutil
+import re
 import code
 import numpy
 import operator
@@ -66,16 +67,26 @@ def __get_result_ids(config_run):
         scenario_id = scenario.get(scenario_name)["id"]
         page_name = __scenario_action_page_name(scenarios[scenario_name])
         test_result_ids.append(TestResult.result_id_for_page(page_name, world_id, scenario_id))
+        # add core action stats for each page
+        test_result_ids.append(__core_actions_page_id(scenario_id))
     return test_result_ids
-
-def __get_clients_active(metrics, live_run):
-    return metrics[__get_clients_active(live_run)]
 
 def __scenario_action_page_name(scenario_config):
     if "actions-per-sec-page" in scenario_config:
         return scenario_config["actions-per-sec-page"]
     else:
         return "app"
+
+def __core_actions_page_id(scenario_id):
+    world_id=LI_WORLD_REGION_ID
+    core_action_page = "core_action"
+    # {"ids":"__li_live_feedback|65:3000,__li_log|4808:3000,__li_page_e77158ecee821e55f9902ba5859b4783:13:3151965|7872:3000,__li_page_e77158ecee821e55f9902ba5859b4783:13:3140094|7873:3000,__li_page_e77158ecee821e55f9902ba5859b4783:13:3092964|7869:3000,__li_page_e77158ecee821e55f9902ba5859b4783:13:3077355|7913:3000,__li_page_e77158ecee821e55f9902ba5859b4783:13:3186366|7871:3000,__li_page_e77158ecee821e55f9902ba5859b4783:13:3144421|7909:3000,__li_page_e77158ecee821e55f9902ba5859b4783:13:3186719|7874:3000,__li_user_load_time:1|1158:3000,__li_clients_active:1|1160:3000,__li_page_e77158ecee821e55f9902ba5859b4783:13:3151965|7872:3000"}
+    page_id = TestResult.result_id_for_page(core_action_page, world_id, scenario_id)
+    page_id = re.sub(r'(__li_page)([^_].+)', r'\1_\2', page_id) # hack to work around page id generation bug in python sdk
+    return page_id
+
+def __get_clients_active(metrics, live_run):
+    return metrics[__get_clients_active(live_run)]
 
 def __get_metrics(config_run, title, live_run=True):
     run_id = config_run["run_id"]
@@ -304,7 +315,9 @@ def __find_sample_period(metrics):
     first_max_client_idx = None
     last_max_client_idx = None
     stable_peak_found = False
+    last_idx = None
     for idx, row in enumerate(clients_active):
+        last_idx = idx
         if row['value'] == 0: # should not happen
             continue
         if row['value'] > clients_max: # still scaling up
@@ -319,6 +332,9 @@ def __find_sample_period(metrics):
                 last_max_client_idx = idx
             # probably scaling down again
             continue
+
+    if last_max_client_idx == None:
+        last_max_client_idx = last_idx
 
     # In the case that we never reached a stable roof, then ensure that
     # last_max_client_idx is at least 4 from the end
@@ -407,23 +423,29 @@ def __scenario_app_page_metrics(scenario_name, metrics, scenario_config):
         app_page_metric_id = TestResult.result_id_for_page(page_name, LI_WORLD_REGION_ID, scenario_id)
         return metrics[app_page_metric_id]
 
-def scenario_peak_actions_per_sec(scenario_name, metrics, scenario_config):
-    app_page_metrics = __scenario_app_page_metrics(scenario_name, metrics, scenario_config)
-    if not app_page_metrics:
-        return []
-    sample_period_metrics = __extract_sample_metrics(app_page_metrics, metrics['sample_period'])
-    val_field = "avg"
-    return __actions_per_sec(sample_period_metrics, metrics, val_field, scenario_config)
+def __scenario_core_action_metrics(scenario_name, metrics, scenario_config):
+    scenario_id = scenario.get(scenario_name)["id"]
+    page_name = __core_actions_page_id(scenario_id)
 
-def scenario_peak_actions_per_sec_avg(scenario_name, metrics, scenario_config):
-    actions_per_sec = scenario_peak_actions_per_sec(scenario_name, metrics, scenario_config)
+    sub_metrics = metrics[page_name]
+    return sub_metrics
+
+def scenario_peak_core_actions_per_sec(scenario_name, metrics, scenario_config):
+    core_action_metrics = __scenario_core_action_metrics(scenario_name, metrics, scenario_config)
+    if not core_action_metrics:
+        return []
+    sample_period_metrics = __extract_sample_metrics(core_action_metrics, metrics['sample_period'])
+    return __core_actions_per_sec(sample_period_metrics, metrics, scenario_config)
+
+def scenario_peak_core_actions_per_sec_avg(scenario_name, metrics, scenario_config):
+    actions_per_sec = scenario_peak_core_actions_per_sec(scenario_name, metrics, scenario_config)
     return report.arr_avg(actions_per_sec, "actions_per_sec")
 
 def __scenario_markup(scenario_name, scenario_config, metrics, dest, run_id):
     markup = ""
 
     # add summary line here with core results for scenario, create and show scenario chart
-    peak_actions_per_sec = scenario_peak_actions_per_sec(scenario_name, metrics, scenario_config)
+    peak_actions_per_sec = scenario_peak_core_actions_per_sec(scenario_name, metrics, scenario_config)
     if not peak_actions_per_sec:
         print("No data found for scenario (%s) %s" % (run_id, scenario_name))
         markup += "<h3 style=\"font-weight: lighter\">No data found for scenario (%s) %s</h3><br/><br/><br/><br/><br/><br/><br/>" % (run_id, scenario_name)
@@ -431,16 +453,16 @@ def __scenario_markup(scenario_name, scenario_config, metrics, dest, run_id):
     peak_actions_per_sec_avg = report.arr_avg(peak_actions_per_sec, "actions_per_sec")
 
     setup_duration_warning = ""
-    if "actions-per-scenario" in scenario_config:
-        setup_duration_warning = " (Executes %d actions per scenario, the setup time is divided by %d and added to each action duration)" % (scenario_config["actions-per-scenario"], scenario_config["actions-per-scenario"])
+#    if "actions-per-scenario" in scenario_config:
+#        setup_duration_warning = " (Executes %d actions per scenario, the setup time is divided by %d and added to each action duration)" % (scenario_config["actions-per-scenario"], scenario_config["actions-per-scenario"])
 
     peak_active_clients = map(lambda row: int(row["clients_active"] * (scenario_config['percent-of-users'] / 100.0)), peak_actions_per_sec) # multiply by the fraction of users reserved for this scenario
     # get peak users avg
     peak_clients_avg = int(numpy.mean(peak_active_clients))
 
     # Get whole test period chart for actions/s
-    app_page_metrics = __scenario_app_page_metrics(scenario_name, metrics, scenario_config)
-    actions_per_sec = __actions_per_sec(app_page_metrics, metrics, "avg", scenario_config)
+    core_action_metrics = __scenario_core_action_metrics(scenario_name, metrics, scenario_config)
+    actions_per_sec = __core_actions_per_sec(core_action_metrics, metrics, scenario_config)
     chart_name = scenario_name + ".actions_per_sec"
     chart_title = scenario_name + ': actions/s' + (" (peak avg: %.02f actions/s, users: %d)" % (peak_actions_per_sec_avg, peak_clients_avg))
     active_clients = map(lambda row: int(row["clients_active"] * (scenario_config['percent-of-users'] / 100.0)), actions_per_sec) # multiply by the fraction of users reserved for this scenario
@@ -470,6 +492,7 @@ def __scenario_markup(scenario_name, scenario_config, metrics, dest, run_id):
     # Get whole test period chart for avg duration
     chart_name = scenario_name + ".avg_durations"
     chart_title = scenario_name + ': avg duration' + (" (users: %d)" % (peak_clients_avg))
+    app_page_metrics = __scenario_app_page_metrics(scenario_name, metrics, scenario_config)
     report.make_time_chart(__report_path(run_id), metrics, chart_title, chart_name, run_id, "Avg duration (s)", app_page_metrics, "avg", dest, True, active_clients)
 
     markup += ("""<div>
@@ -507,38 +530,25 @@ def __clients_active_for_row(row, metrics):
     closest_clients_active = __get_timestamp_closest_value(metrics[CLIENTS_ACTIVE_KEY + ".timestamp_idx"], row_timestamp)
     return closest_clients_active
 
-def __actions_per_sec(sub_metrics, metrics, val_key, scenario_config):
+def  __core_actions_per_sec(sub_metrics, metrics, scenario_config):
+    exit
     ret = []
+    last_row = None
     for row in sub_metrics:
         clients_active = __clients_active_for_row(row, metrics)
-        scenario_duration = float(row[val_key])
-
-        # Some scenarios, like has-session, executes multiple has-session per scenario run.
-        #
-        # If we execute 100 actions per scenario, we must divide load time by 100.
-        # Note that we need to divide the WHOLE scenario load time, also including whatever time
-        # spent setting up the test (e.g. getting a login session, before running has-session).
-        # This, because we are interested in how many actions were ACTUALLY ran in the time period. If we exclude
-        # the setup time, then the actions-per-sec calculation is wrong, and would not match real numbers.
-        #
-        # Example:
-        # Setup time 1s, 10 actions taking 0.3s each. 100 Virtual users.
-        # 100 / (1 + 3)s = 25 scenario executions per sec. Each scenario is 10 actions, so 250 actions per sec.
-        #
-        # If we exclude the setup time we would erroneously get:
-        # 100 / 3s = 33.3 scenario executions per sec, which was not what actually happened, and we would
-        # get 333 actions per sec, which is wrong.
-        action_duration = None
-        if "actions-per-scenario" in scenario_config:
-            action_duration = scenario_duration / scenario_config["actions-per-scenario"]
+        if last_row:
+            time_period_length = (row["timestamp"] - last_row["timestamp"]) / 1000000.0
+            actions_per_sec = row["count"] / time_period_length # count of actions / period duration
         else:
-            action_duration = scenario_duration
+            actions_per_sec = 0.0
         ret.append({
             "timestamp": row["timestamp"],
             "offset": row["offset"],
             "clients_active": clients_active,
-            "actions_per_sec": float(clients_active) / action_duration # actions/sec is virtual_users/duration
+            "actions_per_sec": actions_per_sec
         })
+        last_row = row
+    print("ret:" + json.dumps(ret))
     return ret
 
 # extract data from the sample period

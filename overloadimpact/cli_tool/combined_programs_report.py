@@ -124,7 +124,7 @@ def __target_chart(scenario_name, program_runs):
                 if program_run_name in entries:
                     entries.pop(program_run_name, None)
                 program_run_title = "%s (%d vu's)" % (program_run_name, int(config_params['users'] * (scenario_params["percent-of-users"] / 100.0)))
-                entries[program_run_title] = config_report.scenario_peak_actions_per_sec_avg(scenario_name, config_run['enriched_metrics'], scenario_params)
+                entries[program_run_title] = config_report.scenario_peak_core_actions_per_sec_avg(scenario_name, config_run['enriched_metrics'], scenario_params)
                 program_scenarios_processed[program_run_name][scenario_name] = True
             else:
                 entries[program_run_name] = None
@@ -132,7 +132,7 @@ def __target_chart(scenario_name, program_runs):
     chart.title = scenario_name + ': action/s - program comparison'
     sorted_keys = sorted(entries)
     sorted_vals = map(lambda key: entries[key], sorted_keys)
-    chart.x_labels = sorted_keys
+    chart.x_labels = map(lambda key: (key[:25] + '..') if len(key) > 25 else key, sorted_keys)
     chart.add('Actions/s', sorted_vals)
     chart.render_to_file(__report_path(program_runs) + "/" + __scenario_chart_name(scenario_name) + ".svg")
 
@@ -152,7 +152,7 @@ def __target_chart(scenario_name, program_runs):
     #             scenario_params = config_params['scenarios'][scenario_name]
     #             program_run_title = "%s (%d vu's)" % (program_run_name, int(config_params['users'] * (scenario_params["percent-of-users"] / 100.0)))
 
-    #             entries[program_run_title] = config_report.scenario_peak_actions_per_sec_avg(scenario_name, config_run['enriched_metrics'])
+    #             entries[program_run_title] = config_report.scenario_peak_core_actions_per_sec_avg(scenario_name, config_run['enriched_metrics'])
     #         else:
     #             entries[program_run_name] = None
 
