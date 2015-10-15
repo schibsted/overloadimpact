@@ -65,11 +65,18 @@ def __get_result_ids(config_run):
     scenarios = config_run["config_params"]["scenarios"]
     for scenario_name in scenarios:
         scenario_id = scenario.get(scenario_name)["id"]
-        page_name = __scenario_action_page_name(scenarios[scenario_name])
-        test_result_ids.append(TestResult.result_id_for_page(page_name, world_id, scenario_id))
-        # add core action stats for each page
+        # add app page metrics for each scenario
+        test_result_ids.append(__scenario_app_page_metric_id(scenario_id, scenarios[scenario_name]))
+        # add core action metrics for each scenario
         test_result_ids.append(__core_actions_page_id(scenario_id))
     return test_result_ids
+
+def __scenario_app_page_metric_id(scenario_id, scenario_config):
+    world_id=LI_WORLD_REGION_ID
+    page_name = __scenario_action_page_name(scenario_config)
+    page_id = TestResult.result_id_for_page(page_name, world_id, scenario_id)
+    page_id = re.sub(r'(__li_page)([^_].+)', r'\1_\2', page_id) # hack to work around page id generation bug in python sdk
+    return page_id
 
 def __scenario_action_page_name(scenario_config):
     if "actions-per-sec-page" in scenario_config:
@@ -80,7 +87,6 @@ def __scenario_action_page_name(scenario_config):
 def __core_actions_page_id(scenario_id):
     world_id=LI_WORLD_REGION_ID
     core_action_page = "core_action"
-    # {"ids":"__li_live_feedback|65:3000,__li_log|4808:3000,__li_page_e77158ecee821e55f9902ba5859b4783:13:3151965|7872:3000,__li_page_e77158ecee821e55f9902ba5859b4783:13:3140094|7873:3000,__li_page_e77158ecee821e55f9902ba5859b4783:13:3092964|7869:3000,__li_page_e77158ecee821e55f9902ba5859b4783:13:3077355|7913:3000,__li_page_e77158ecee821e55f9902ba5859b4783:13:3186366|7871:3000,__li_page_e77158ecee821e55f9902ba5859b4783:13:3144421|7909:3000,__li_page_e77158ecee821e55f9902ba5859b4783:13:3186719|7874:3000,__li_user_load_time:1|1158:3000,__li_clients_active:1|1160:3000,__li_page_e77158ecee821e55f9902ba5859b4783:13:3151965|7872:3000"}
     page_id = TestResult.result_id_for_page(core_action_page, world_id, scenario_id)
     page_id = re.sub(r'(__li_page)([^_].+)', r'\1_\2', page_id) # hack to work around page id generation bug in python sdk
     return page_id
@@ -410,17 +416,14 @@ def __page_markup(title, subtitle, config_run, metrics, dest, run_id):
 
 
 def __scenario_app_page_metrics(scenario_name, metrics, scenario_config):
-    scenario_id = scenario.get(scenario_name)["id"]
-    page_name = __scenario_action_page_name(scenario_config)
-
     # For legacy tests where "app" page does not wrap the whole test, and where there was only one scenario per
     # test config, we use the whole test config load time instead.
     # An example is has-session which does one login and 100 has-session calls.
-
     if "use-scenario-load-time" in scenario_config:
         return __get_metric_as_actions_per_sec(USER_LOAD_TIME_KEY, metrics, 1000.0)
     else:
-        app_page_metric_id = TestResult.result_id_for_page(page_name, LI_WORLD_REGION_ID, scenario_id)
+        scenario_id = scenario.get(scenario_name)["id"]
+        app_page_metric_id = __scenario_app_page_metric_id(scenario_id, scenario_config)
         return metrics[app_page_metric_id]
 
 def __scenario_core_action_metrics(scenario_name, metrics, scenario_config):
@@ -548,7 +551,6 @@ def  __core_actions_per_sec(sub_metrics, metrics, scenario_config):
             "actions_per_sec": actions_per_sec
         })
         last_row = row
-    print("ret:" + json.dumps(ret))
     return ret
 
 # extract data from the sample period
