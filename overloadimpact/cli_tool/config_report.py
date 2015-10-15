@@ -455,10 +455,6 @@ def __scenario_markup(scenario_name, scenario_config, metrics, dest, run_id):
         return markup
     peak_actions_per_sec_avg = report.arr_avg(peak_actions_per_sec, "actions_per_sec")
 
-    setup_duration_warning = ""
-#    if "actions-per-scenario" in scenario_config:
-#        setup_duration_warning = " (Executes %d actions per scenario, the setup time is divided by %d and added to each action duration)" % (scenario_config["actions-per-scenario"], scenario_config["actions-per-scenario"])
-
     peak_active_clients = map(lambda row: int(row["clients_active"] * (scenario_config['percent-of-users'] / 100.0)), peak_actions_per_sec) # multiply by the fraction of users reserved for this scenario
     # get peak users avg
     peak_clients_avg = int(numpy.mean(peak_active_clients))
@@ -474,7 +470,6 @@ def __scenario_markup(scenario_name, scenario_config, metrics, dest, run_id):
     markup += ("""<div>
     <h3 style="font-weight: lighter">Actions/s for scenario: <span style="font-weight: bold">%s</span>, """ % scenario_name)
     markup += ("""Peak period average <span style="font-weight: bold">actions/s: %.02f</span> </p>""" % peak_actions_per_sec_avg)
-    markup += """<p style="font-size: 0.8em">""" + setup_duration_warning + """</p>"""
     markup += report.chart_markup(chart_name)
     markup += "</div>"
 
@@ -487,7 +482,6 @@ def __scenario_markup(scenario_name, scenario_config, metrics, dest, run_id):
     markup += ("""<div>
     <h3 style="font-weight: lighter">Actions/s on peak load for scenario: <span style="font-weight: bold">%s</span>, """ % scenario_name)
     markup += ("""Peak period average <span style="font-weight: bold">actions/s: %.02f</span> </p>""" % peak_actions_per_sec_avg)
-    markup += """<p style="font-size: 0.8em">""" + setup_duration_warning + """</p>"""
     markup += report.chart_markup(chart_name)
     markup += "</div>"
 
@@ -501,7 +495,6 @@ def __scenario_markup(scenario_name, scenario_config, metrics, dest, run_id):
     markup += ("""<div>
     <h3 style="font-weight: lighter">Avg duration for scenario: <span style="font-weight: bold">%s</span>, """ % scenario_name)
     markup += ("""Peak period average <span style="font-weight: bold">actions/s: %.02f</span> </p>""" % peak_actions_per_sec_avg)
-    markup += """<p style="font-size: 0.8em">""" + setup_duration_warning + """</p>"""
     markup += report.chart_markup(chart_name)
     markup += "</div>"
 
