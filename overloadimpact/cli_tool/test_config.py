@@ -78,18 +78,25 @@ def configure(id, users, warmup, stable=0, scenarios=None, source_ip_multiplier=
     test_config.config[u'source_ips'] = source_ips
     print("test_config.config:" + repr(test_config.config))
 
-    # handle strange case where 5 is not accepted, possibly due to too many scenarios
-    if source_ips == 5:
+    # Handle strange case where correct source_ips is not accepted, possibly due to multiple scenarios incrementing
+    # source_ips. Try incrementing source_ips until reaching MAX_SOURCE_IPS to get the correct number.
+    MAX_SOURCE_IPS = 100
+    update_failed = True
+    for source_ips_iter in range(source_ips, MAX_SOURCE_IPS):
         try:
+            print("Attempt test_config.update() with source_ips %d" % (source_ips_iter))
+            test_config.config[u'source_ips'] = source_ips_iter
             test_config.update()
+            update_failed = False
+            break
         except loadimpact.exceptions.BadRequestError:
-            print("Failed for source_ips %d" % (source_ips))
-            print("Testing with source_ips %d" % (7))
-            test_config.config[u'source_ips'] = 7
+            print("Failed test_config.update() for source_ips %d" % (source_ips_iter))
+
+    if update_failed:
+        exit('source_ips test_config.update() error')
 
     test_config = liclient.client.get_test_config(id)
     load_schedule = test_config.config['load_schedule']
-    print("test_config.py:" + repr(37) + ":test_config:" + repr(test_config))
 
     print('==> Updated config %s' % (test_config.name))
 
