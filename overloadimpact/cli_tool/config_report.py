@@ -68,15 +68,25 @@ def __get_result_ids(config_run):
         # add app page metrics for each scenario
         test_result_ids.append(__scenario_app_page_metric_id(scenario_id, scenarios[scenario_name]))
         # add core action metrics for each scenario
-        test_result_ids.append(__core_actions_page_id(scenario_id))
+        test_result_ids.append(__core_actions_metric_id(scenario_id))
+        test_result_ids.append(__correctness_metric_id(scenario_id))
     return test_result_ids
+
+# Get the metric id for the scenario correctness (app.pass) metric, giving percentage of successful tests
+def __correctness_metric_id(scenario_id):
+    world_id=LI_WORLD_REGION_ID
+    metric_id = TestResult.result_id_from_custom_metric_name("app.pass", world_id,
+                                          scenario_id)
+    metric_id = re.sub(r'(__custom)([^_].+)', r'\1_\2', metric_id) # hack to work around custom id generation bug in python sdk
+    # "__custom_4014eec137b4e674596b7db18ed795f1:13:3140094|0:3000"
+    return metric_id
 
 def __scenario_app_page_metric_id(scenario_id, scenario_config):
     world_id=LI_WORLD_REGION_ID
     page_name = __scenario_action_page_name(scenario_config)
-    page_id = TestResult.result_id_for_page(page_name, world_id, scenario_id)
-    page_id = re.sub(r'(__li_page)([^_].+)', r'\1_\2', page_id) # hack to work around page id generation bug in python sdk
-    return page_id
+    metric_id = TestResult.result_id_for_page(page_name, world_id, scenario_id)
+    metric_id = re.sub(r'(__li_page)([^_].+)', r'\1_\2', metric_id) # hack to work around page id generation bug in python sdk
+    return metric_id
 
 def __scenario_action_page_name(scenario_config):
     if "actions-per-sec-page" in scenario_config:
@@ -84,12 +94,12 @@ def __scenario_action_page_name(scenario_config):
     else:
         return "app"
 
-def __core_actions_page_id(scenario_id):
+def __core_actions_metric_id(scenario_id):
     world_id=LI_WORLD_REGION_ID
     core_action_page = "core_action"
-    page_id = TestResult.result_id_for_page(core_action_page, world_id, scenario_id)
-    page_id = re.sub(r'(__li_page)([^_].+)', r'\1_\2', page_id) # hack to work around page id generation bug in python sdk
-    return page_id
+    metric_id = TestResult.result_id_for_page(core_action_page, world_id, scenario_id)
+    metric_id = re.sub(r'(__li_page)([^_].+)', r'\1_\2', metric_id) # hack to work around page id generation bug in python sdk
+    return metric_id
 
 def __get_clients_active(metrics, live_run):
     return metrics[__get_clients_active(live_run)]
@@ -428,9 +438,16 @@ def __scenario_app_page_metrics(scenario_name, metrics, scenario_config):
 
 def __scenario_core_action_metrics(scenario_name, metrics, scenario_config):
     scenario_id = scenario.get(scenario_name)["id"]
-    page_name = __core_actions_page_id(scenario_id)
+    metric_id = __core_actions_metric_id(scenario_id)
 
-    sub_metrics = metrics[page_name]
+    sub_metrics = metrics[metric_id]
+    return sub_metrics
+
+def __correctness_metrics(scenario_name, metrics, scenario_config):
+    scenario_id = scenario.get(scenario_name)["id"]
+    metric_id = __correctness_metric_id(scenario_id)
+
+    sub_metrics = metrics[metric_id]
     return sub_metrics
 
 def scenario_peak_core_actions_per_sec(scenario_name, metrics, scenario_config):
@@ -485,7 +502,6 @@ def __scenario_markup(scenario_name, scenario_config, metrics, dest, run_id):
     markup += report.chart_markup(chart_name)
     markup += "</div>"
 
-
     # Get whole test period chart for avg duration
     chart_name = scenario_name + ".avg_durations"
     chart_title = scenario_name + ': avg duration' + (" (users: %d)" % (peak_clients_avg))
@@ -494,6 +510,30 @@ def __scenario_markup(scenario_name, scenario_config, metrics, dest, run_id):
 
     markup += ("""<div>
     <h3 style="font-weight: lighter">Avg duration for scenario: <span style="font-weight: bold">%s</span>, """ % scenario_name)
+    markup += ("""Peak period average <span style="font-weight: bold">actions/s: %.02f</span> </p>""" % peak_actions_per_sec_avg)
+    markup += report.chart_markup(chart_name)
+    markup += "</div>"
+
+    # Get whole test period chart for avg core action duration
+    # core_action_metrics = __scenario_core_action_metrics(scenario_name, metrics, scenario_config)
+    chart_name = scenario_name + ".core_action_durations"
+    chart_title = scenario_name + ': avg action duration' + (" (users: %d)" % (peak_clients_avg))
+    report.make_time_chart(__report_path(run_id), metrics, chart_title, chart_name, run_id, "Avg duration (s)", core_action_metrics, "avg", dest, True, active_clients)
+
+    markup += ("""<div>
+    <h3 style="font-weight: lighter">Avg action duration for scenario: <span style="font-weight: bold">%s</span>, """ % scenario_name)
+    markup += ("""Peak period average <span style="font-weight: bold">actions/s: %.02f</span> </p>""" % peak_actions_per_sec_avg)
+    markup += report.chart_markup(chart_name)
+    markup += "</div>"
+
+    # Get whole test period chart for correctness
+    chart_name = scenario_name + ".correctness"
+    chart_title = scenario_name + ': correctness' + (" (users: %d)" % (peak_clients_avg))
+    correctness_metrics = __correctness_metrics(scenario_name, metrics, scenario_config)
+    report.make_time_chart(__report_path(run_id), metrics, chart_title, chart_name, run_id, "Correctness (1 = 100% correct)", correctness_metrics, "avg", dest, True, active_clients)
+
+    markup += ("""<div>
+    <h3 style="font-weight: lighter">Avg correctness scenario: <span style="font-weight: bold">%s</span>, """ % scenario_name)
     markup += ("""Peak period average <span style="font-weight: bold">actions/s: %.02f</span> </p>""" % peak_actions_per_sec_avg)
     markup += report.chart_markup(chart_name)
     markup += "</div>"
