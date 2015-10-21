@@ -113,7 +113,10 @@ def __configure_tracks(test_config, scenario_params):
         if 'multi_regions' in scenario_params[scenario_name]:
             region_percents = __distribute_percents(total_percent, ('use_alternative_regions' in scenario_params[scenario_name]))
         else:
-            region_percents = {u'amazon:ie:dublin': total_percent}
+            if 'region' in scenario_params[scenario_name]:
+                region_percents = {scenario_params[scenario_name]['region']: total_percent}
+            else:
+                region_percents = {u'amazon:ie:dublin': total_percent}
 
         for region in region_percents:
             track = {}

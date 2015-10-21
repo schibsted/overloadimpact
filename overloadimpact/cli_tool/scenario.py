@@ -23,6 +23,7 @@ def update(name):
 
     for name in names:
         config = scenarios[name]
+        print('Updating scenario: ' + name)
         code.update(config['id'], name)
 
 
