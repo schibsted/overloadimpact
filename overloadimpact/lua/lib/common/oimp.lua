@@ -34,6 +34,7 @@ function oimp.info(msg)
 end
 
 function oimp.error(msg)
+  oimp.top_pass(0)
   if not oimp.should_log() then
     return
   end
@@ -42,8 +43,25 @@ function oimp.error(msg)
     return
   end
 
-  log.error('ERROR', msg)
-  oimp.metric('pass', 0)
+  if oimp_config.ERRORS_AS_INFO then
+    log.info('ERROR', msg)
+  else
+    log.error('ERROR', msg)
+  end
+end
+
+oimp.top_pass_set_already = false
+
+function oimp.top_pass(pass)
+  if oimp.top_pass_set_already then -- we must only set pass metric once for each test, to get correct pass counts
+    return
+  end
+  oimp.top_pass_set_already = true
+  if oimp_config.PRINT_TOP_PASS then
+    oimp.info("top_pass " .. pass)
+  end
+  oimp.metric('pass', pass)
+  oimp.metric(scenario_name .. '.pass', pass)
 end
 
 function oimp.profile(uri, trace)
@@ -186,7 +204,7 @@ function oimp.done(pass)
   http.page_end(top_page)
 
   if pass ~= nil then
-    oimp.metric('pass', pass)
+    oimp.top_pass(pass)
   end
 end
 
