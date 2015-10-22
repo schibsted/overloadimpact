@@ -17,7 +17,7 @@ def get_start_time(metrics):
     timestamp = metrics["__li_live_feedback"][0]["timestamp"]
     return datetime.datetime.fromtimestamp(__to_secs(timestamp)).strftime("%Y-%m-%d %H:%M:%S")
 
-def make_time_chart(report_path, metrics, title, chart_name, run_id, y_label, rows, y_key, dest, display_active_clients, active_clients):
+def make_time_chart(report_path, metrics, title, chart_name, run_id, y_label, rows, y_key, dest_dir, display_active_clients, active_clients):
     chart = pygal_line()
     chart.title = title
 
@@ -32,9 +32,11 @@ def make_time_chart(report_path, metrics, title, chart_name, run_id, y_label, ro
 
     # display active clients metric
     if display_active_clients:
+        if y_vals[-1] == 1 and y_vals[0] == 1:
+            y_vals[-1] = y_vals[-1] - 0.000001 # work around to avoid render errors when all y_vals are exactly 1
         chart.add('Active clients', active_clients, secondary=True)
 
-    chart.render_to_file(report_path + "/" + dest + "/" + chart_name + ".svg")
+    chart.render_to_file(report_path + "/" + dest_dir + "/" + chart_name + ".svg")
 
 def make_time_labels(timestamps):
     time_labels = map(lambda timestamp: datetime.datetime.fromtimestamp(__to_secs(timestamp)).strftime("%H:%M:%S"), timestamps)

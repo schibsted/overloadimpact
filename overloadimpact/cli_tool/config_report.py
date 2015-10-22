@@ -69,14 +69,18 @@ def __get_result_ids(config_run):
         test_result_ids.append(__scenario_app_page_metric_id(scenario_id, scenarios[scenario_name]))
         # add core action metrics for each scenario
         test_result_ids.append(__core_actions_metric_id(scenario_id))
-        test_result_ids.append(__correctness_metric_id(scenario_id))
+        test_result_ids.append(__correctness_metric_id(scenario_id, scenario_name))
     return test_result_ids
 
 # Get the metric id for the scenario correctness (app.pass) metric, giving percentage of successful tests
-def __correctness_metric_id(scenario_id):
+def __correctness_metric_id(scenario_id, scenario_name):
     world_id=LI_WORLD_REGION_ID
-    metric_id = TestResult.result_id_from_custom_metric_name("app.pass", world_id,
+#    metric_id = TestResult.result_id_from_custom_metric_name("app.pass", world_id,
+#                                          scenario_id)
+    # app.pass seems to not have complete data per scenario, try scenario pass metric instead
+    metric_id = TestResult.result_id_from_custom_metric_name("app.scenario_" + scenario_name + ".pass", world_id,
                                           scenario_id)
+
     metric_id = re.sub(r'(__custom)([^_].+)', r'\1_\2', metric_id) # hack to work around custom id generation bug in python sdk
     # "__custom_4014eec137b4e674596b7db18ed795f1:13:3140094|0:3000"
     return metric_id
@@ -364,7 +368,7 @@ def __find_sample_period(metrics):
     return {"start_row": clients_active[sample_period_start_idx],
             "end_row": clients_active[sample_period_stop_idx]}
 
-def __make_charts(run_id, metrics, dest, config_run):
+def __make_charts(run_id, metrics, dest_dir, config_run):
     flows_per_sec = __flows_per_sec(metrics)
     time_labels = report.make_time_labels(flows_per_sec['keys'])
     active_clients = __get_metric(CLIENTS_ACTIVE_KEY, metrics, 1)
@@ -376,7 +380,7 @@ def __make_charts(run_id, metrics, dest, config_run):
     chart.x_labels = time_labels
     chart.add('Flows/s', flows_per_sec['vals'])
     chart.add('Active clients', active_clients['vals'], secondary=True)
-    chart.render_to_file(report_path + "/" + dest + "/flows_clients.svg")
+    chart.render_to_file(report_path + "/" + dest_dir + "/flows_clients.svg")
 
     report_path = __report_path(run_id)
     chart = report.pygal_line()
@@ -384,21 +388,21 @@ def __make_charts(run_id, metrics, dest, config_run):
     chart.x_labels = time_labels
     chart.add('Flows/s', flows_per_sec['vals'])
     chart.add('Avg load time (s)', load_times['vals'], secondary=True)
-    chart.render_to_file(report_path + "/" + dest + "/flows_loadtime.svg")
+    chart.render_to_file(report_path + "/" + dest_dir + "/flows_loadtime.svg")
 
     report_path = __report_path(run_id)
     chart = report.pygal_line()
     chart.title = 'Flows per second'
     chart.x_labels = time_labels
     chart.add('Flows/s', flows_per_sec['vals'])
-    chart.render_to_file(report_path + "/" + dest + "/load.svg")
+    chart.render_to_file(report_path + "/" + dest_dir + "/load.svg")
 
     time_labels = report.make_time_labels(load_times['keys'])
     chart = report.pygal_line()
     chart.title = 'Avg load time (s)'
     chart.x_labels = time_labels
     chart.add('Avg (s)', load_times['vals'])
-    chart.render_to_file(report_path + "/" + dest + "/duration.svg")
+    chart.render_to_file(report_path + "/" + dest_dir + "/duration.svg")
 
     active_clients = __get_metric(CLIENTS_ACTIVE_KEY, metrics, 1)
     time_labels = report.make_time_labels(active_clients['keys'])
@@ -406,15 +410,15 @@ def __make_charts(run_id, metrics, dest, config_run):
     chart.title = 'Active clients'
     chart.x_labels = time_labels
     chart.add('Active clients', active_clients['vals'])
-    chart.render_to_file(report_path + "/" + dest + "/active.svg")
+    chart.render_to_file(report_path + "/" + dest_dir + "/active.svg")
 
-def __page_markup(title, subtitle, config_run, metrics, dest, run_id):
+def __page_markup(title, subtitle, config_run, metrics, dest_dir, run_id):
     markup = report.header(title, subtitle, "Scenarios")
     markup += """<div class="scenarios">"""
 
     scenarios = config_run["config_params"]["scenarios"]
     for scenario_name, scenario_config in scenarios.items():
-        markup += __scenario_markup(scenario_name, scenario_config, metrics, dest, run_id)
+        markup += __scenario_markup(scenario_name, scenario_config, metrics, dest_dir, run_id)
     markup += """</div>"""
 
     markup += report.section_title("General results for whole test config", "Normally less useful than scenario stats above because aggregated between different scenarios! Note that flows per second is not adjusted for multiple actions per scenario, so even if a scenario executes 100 actions in one scenario, the whole scenario is calculated as one action.")
@@ -445,7 +449,7 @@ def __scenario_core_action_metrics(scenario_name, metrics, scenario_config):
 
 def __correctness_metrics(scenario_name, metrics, scenario_config):
     scenario_id = scenario.get(scenario_name)["id"]
-    metric_id = __correctness_metric_id(scenario_id)
+    metric_id = __correctness_metric_id(scenario_id, scenario_name)
 
     sub_metrics = metrics[metric_id]
     return sub_metrics
@@ -455,13 +459,13 @@ def scenario_peak_core_actions_per_sec(scenario_name, metrics, scenario_config):
     if not core_action_metrics:
         return []
     sample_period_metrics = __extract_sample_metrics(core_action_metrics, metrics['sample_period'])
-    return __core_actions_per_sec(sample_period_metrics, metrics, scenario_config)
+    return __add_active_clients_from_sub_metrics(scenario_config, __core_actions_per_sec(sample_period_metrics, metrics, scenario_config), metrics)
 
 def scenario_peak_core_actions_per_sec_avg(scenario_name, metrics, scenario_config):
     actions_per_sec = scenario_peak_core_actions_per_sec(scenario_name, metrics, scenario_config)
     return report.arr_avg(actions_per_sec, "actions_per_sec")
 
-def __scenario_markup(scenario_name, scenario_config, metrics, dest, run_id):
+def __scenario_markup(scenario_name, scenario_config, metrics, dest_dir, run_id):
     markup = ""
 
     # add summary line here with core results for scenario, create and show scenario chart
@@ -472,68 +476,77 @@ def __scenario_markup(scenario_name, scenario_config, metrics, dest, run_id):
         return markup
     peak_actions_per_sec_avg = report.arr_avg(peak_actions_per_sec, "actions_per_sec")
 
-    peak_active_clients = map(lambda row: int(row["clients_active"] * (scenario_config['percent-of-users'] / 100.0)), peak_actions_per_sec) # multiply by the fraction of users reserved for this scenario
+    peak_active_clients = map(lambda row: row["proportional_clients_active"], peak_actions_per_sec)
     # get peak users avg
     peak_clients_avg = int(numpy.mean(peak_active_clients))
 
     # Get whole test period chart for actions/s
     core_action_metrics = __scenario_core_action_metrics(scenario_name, metrics, scenario_config)
     actions_per_sec = __core_actions_per_sec(core_action_metrics, metrics, scenario_config)
-    chart_name = scenario_name + ".actions_per_sec"
-    chart_title = scenario_name + ': actions/s' + (" (peak avg: %.02f actions/s, users: %d)" % (peak_actions_per_sec_avg, peak_clients_avg))
-    active_clients = map(lambda row: int(row["clients_active"] * (scenario_config['percent-of-users'] / 100.0)), actions_per_sec) # multiply by the fraction of users reserved for this scenario
-    report.make_time_chart(__report_path(run_id), metrics, chart_title, chart_name, run_id, "Actions/s", actions_per_sec, "actions_per_sec", dest, True, active_clients)
-
-    markup += ("""<div>
-    <h3 style="font-weight: lighter">Actions/s for scenario: <span style="font-weight: bold">%s</span>, """ % scenario_name)
-    markup += ("""Peak period average <span style="font-weight: bold">actions/s: %.02f</span> </p>""" % peak_actions_per_sec_avg)
-    markup += report.chart_markup(chart_name)
-    markup += "</div>"
-
+    sub_metrics = actions_per_sec
+    chart_title = "actions per sec"
+    y_label = "Actions/s"
+    y_key = "actions_per_sec"
+    markup += __chart_and_markup(chart_title, scenario_name, scenario_config, run_id, y_label, y_key, peak_actions_per_sec_avg, peak_clients_avg, sub_metrics, metrics, dest_dir, True)
 
     # peak period action/s chart
-    chart_name = scenario_name + ".actions_per_sec.peak_period"
-    chart_title = scenario_name + ': peak traffic actions/s' + (" (avg: %.02f, users: %d)" % (peak_actions_per_sec_avg, peak_clients_avg))
-    report.make_time_chart(__report_path(run_id), metrics, chart_title, chart_name, run_id, "Actions/s", peak_actions_per_sec, "actions_per_sec", dest, False, None)
-
-    markup += ("""<div>
-    <h3 style="font-weight: lighter">Actions/s on peak load for scenario: <span style="font-weight: bold">%s</span>, """ % scenario_name)
-    markup += ("""Peak period average <span style="font-weight: bold">actions/s: %.02f</span> </p>""" % peak_actions_per_sec_avg)
-    markup += report.chart_markup(chart_name)
-    markup += "</div>"
+    sub_metrics = peak_actions_per_sec
+    chart_title = "peak traffic actions"
+    y_label = "Actions/s"
+    y_key = "actions_per_sec"
+    markup += __chart_and_markup(chart_title, scenario_name, scenario_config, run_id, y_label, y_key, peak_actions_per_sec_avg, peak_clients_avg, sub_metrics, metrics, dest_dir, False)
 
     # Get whole test period chart for avg duration
-    chart_name = scenario_name + ".avg_durations"
-    chart_title = scenario_name + ': avg duration' + (" (users: %d)" % (peak_clients_avg))
     app_page_metrics = __scenario_app_page_metrics(scenario_name, metrics, scenario_config)
-    report.make_time_chart(__report_path(run_id), metrics, chart_title, chart_name, run_id, "Avg duration (s)", app_page_metrics, "avg", dest, True, active_clients)
-
-    markup += ("""<div>
-    <h3 style="font-weight: lighter">Avg duration for scenario: <span style="font-weight: bold">%s</span>, """ % scenario_name)
-    markup += ("""Peak period average <span style="font-weight: bold">actions/s: %.02f</span> </p>""" % peak_actions_per_sec_avg)
-    markup += report.chart_markup(chart_name)
-    markup += "</div>"
+    sub_metrics = app_page_metrics
+    chart_title = "avg total duration"
+    y_label = "Avg total duration (s)"
+    y_key = "avg"
+    markup += __chart_and_markup(chart_title, scenario_name, scenario_config, run_id, y_label, y_key, peak_actions_per_sec_avg, peak_clients_avg, sub_metrics, metrics, dest_dir, True)
 
     # Get whole test period chart for avg core action duration
-    # core_action_metrics = __scenario_core_action_metrics(scenario_name, metrics, scenario_config)
-    chart_name = scenario_name + ".core_action_durations"
-    chart_title = scenario_name + ': avg action duration' + (" (users: %d)" % (peak_clients_avg))
-    report.make_time_chart(__report_path(run_id), metrics, chart_title, chart_name, run_id, "Avg duration (s)", core_action_metrics, "avg", dest, True, active_clients)
+    sub_metrics = core_action_metrics
+    chart_title = "core action duration"
+    y_label = "Avg duration (s)"
+    y_key = "avg"
+    markup += __chart_and_markup(chart_title, scenario_name, scenario_config, run_id, y_label, y_key, peak_actions_per_sec_avg, peak_clients_avg, sub_metrics, metrics, dest_dir, True)
 
-    markup += ("""<div>
-    <h3 style="font-weight: lighter">Avg action duration for scenario: <span style="font-weight: bold">%s</span>, """ % scenario_name)
-    markup += ("""Peak period average <span style="font-weight: bold">actions/s: %.02f</span> </p>""" % peak_actions_per_sec_avg)
-    markup += report.chart_markup(chart_name)
-    markup += "</div>"
 
     # Get whole test period chart for correctness
-    chart_name = scenario_name + ".correctness"
-    chart_title = scenario_name + ': correctness' + (" (users: %d)" % (peak_clients_avg))
-    correctness_metrics = __correctness_metrics(scenario_name, metrics, scenario_config)
-    report.make_time_chart(__report_path(run_id), metrics, chart_title, chart_name, run_id, "Correctness (1 = 100% correct)", correctness_metrics, "avg", dest, True, active_clients)
+    sub_metrics = __correctness_metrics(scenario_name, metrics, scenario_config)
+    chart_title = "correctness"
+    y_label = "Correctness (1 = 100% correct)"
+    markup += __chart_and_markup(chart_title, scenario_name, scenario_config, run_id, y_label, y_key, peak_actions_per_sec_avg, peak_clients_avg, sub_metrics, metrics, dest_dir, True)
+
+    return markup
+
+def __add_active_clients_from_sub_metrics(scenario_config, sub_metrics, metrics):
+    ret = []
+    for row in sub_metrics:
+        if "clients_active" in row:
+            return # already has clients_active data so ignore
+        row["clients_active"] = __clients_active_for_row(row, metrics)
+        row["proportional_clients_active"] = row["clients_active"] * (scenario_config['percent-of-users'] / 100.0) # multiply by the fraction of users reserved for this scenario
+        ret.append(row)
+    return ret
+
+def __chart_and_markup(title, scenario_name, scenario_config, run_id, y_label, y_key, peak_actions_per_sec_avg, peak_clients_avg, sub_metrics, metrics, dest_dir, display_active_clients):
+    markup = ""
+    # strip alphanum
+    pattern = re.compile('[\W_]+')
+    chart_id = "." + pattern.sub('', title)
+
+    chart_name = scenario_name + chart_id
+    chart_title = scenario_name + ': ' + title + (" (users: %d)" % (peak_clients_avg))
+    active_clients = None
+    if display_active_clients:
+        sub_metrics = __add_active_clients_from_sub_metrics(scenario_config, sub_metrics, metrics)
+        active_clients = map(lambda row: row["proportional_clients_active"], sub_metrics)
+
+    report.make_time_chart(__report_path(run_id), metrics, chart_title, chart_name, run_id, y_label, sub_metrics, y_key, dest_dir, display_active_clients, active_clients)
 
     markup += ("""<div>
-    <h3 style="font-weight: lighter">Avg correctness scenario: <span style="font-weight: bold">%s</span>, """ % scenario_name)
+    <h3 style="font-weight: lighter">Avg %s for scenario: <span style="font-weight: bold">%s</span>, """ % (title, scenario_name))
     markup += ("""Peak period average <span style="font-weight: bold">actions/s: %.02f</span> </p>""" % peak_actions_per_sec_avg)
     markup += report.chart_markup(chart_name)
     markup += "</div>"
@@ -571,7 +584,6 @@ def  __core_actions_per_sec(sub_metrics, metrics, scenario_config):
     ret = []
     last_row = None
     for row in sub_metrics:
-        clients_active = __clients_active_for_row(row, metrics)
         if last_row:
             time_period_length = (row["timestamp"] - last_row["timestamp"]) / 1000000.0
             actions_per_sec = row["count"] / time_period_length # count of actions / period duration
@@ -580,7 +592,6 @@ def  __core_actions_per_sec(sub_metrics, metrics, scenario_config):
         ret.append({
             "timestamp": row["timestamp"],
             "offset": row["offset"],
-            "clients_active": clients_active,
             "actions_per_sec": actions_per_sec
         })
         last_row = row
