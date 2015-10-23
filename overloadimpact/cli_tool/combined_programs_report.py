@@ -50,13 +50,18 @@ def __page_markup(program_runs):
 
 
 def __combined_results_markup(program_runs):
-    scenarios = __target_chart_scenarios(program_runs)
+    target_chart_scenarios = __target_chart_scenarios(program_runs) # get the scenarios valid for target charts
     markup = ""
     scenarios_markup = ""
-    for scenario_name in scenarios:
+    scenarios_markup += __combined_scenarios_summary_markup(target_chart_scenarios, program_runs)
+    for scenario_name in target_chart_scenarios:
         scenarios_markup += __combined_scenario_markup(scenario_name, program_runs)
     markup += report.section("Combined action/s charts for scenarios with targets", scenarios_markup)
     return markup
+
+def __combined_scenarios_summary_markup(targets_chart_scenarios, program_runs):
+    __combined_target_chart(targets_chart_scenarios, program_runs)
+    return report.chart_markup("all_runs_and_targets", "")
 
 def __scenario_chart_name(scenario_name):
     return scenario_name + ".combined"
@@ -66,7 +71,6 @@ def __combined_scenario_markup(scenario_name, program_runs):
     __target_chart(scenario_name, program_runs)
     # create markup
     return report.chart_markup(__scenario_chart_name(scenario_name), "")
-
 
 def __program_runs_markup(program_runs):
     markup = ""
@@ -98,6 +102,63 @@ def __target_chart_scenarios(program_runs):
             for scenario_name, scenario in config['scenarios'].iteritems():
                 scenarios[scenario_name] = True
     return scenarios
+
+def __combined_target_chart(target_chart_scenarios, program_runs):
+    chart = report.pygal_bar()
+
+    # chart.x_labels = map(str, range(2002, 2013))
+    # chart.add('Firefox', [None, None, 0, 16.6,   25,   31, 36.4, 45.5, 46.3, 42.8, 37.1])
+    # chart.add('Chrome',  [None, None, None, None, None, None,    0,  3.9, 10.8, 23.8, 35.3])
+
+    sets = {}
+    # collect target sets
+    for target_name, target_arr in target.get_targets().iteritems():
+        target_title = "Target " + target_name
+        sets[target_title] = {}
+        for scenario_name in target_chart_scenarios:
+            sets[target_title][scenario_name] = target_arr[scenario_name]['actions-per-sec']
+
+
+    for program_run_name, program_run in program_runs.iteritems():
+        sets[program_run_name] = {}
+        # collect scenario run  for each program sets
+        for config_name, config_run in program_run['config_runs'].iteritems():
+            config_params = config_run['config_params']
+            for scenario_name in config_run['config_params']['scenarios']:
+                scenario_params = config_params['scenarios'][scenario_name]
+                sets[program_run_name][scenario_name] = config_report.scenario_peak_core_actions_per_sec_avg(scenario_name, config_run['enriched_metrics'], scenario_params)
+
+    chart.title = 'All scenarios: action/s - program comparison'
+    # make entries
+    data_sets = {}
+    x_labels = []
+    for set_name, set in sets.iteritems():
+        set_title = __format_set_title(set_name)
+        data_sets[set_name] = {"title": set_title, "data":[]}
+
+    x_labels = []
+    for scenario_name in target_chart_scenarios:
+        x_labels.append(scenario_name)
+    x_labels = sorted(x_labels)
+
+    # arrange data arrays according to sorted scenario_names
+    for scenario_name in x_labels:
+        for set_name, _set in sets.iteritems():
+            if scenario_name in sets[program_run_name]:
+                data_sets[set_name]["data"].append(_set[scenario_name])
+            else:
+                data_sets[set_name]["data"].append(None)
+
+    chart.x_labels = map(__format_set_title, x_labels)
+    # att chart sets for each target and program_run
+    sorted_set_names = sorted(data_sets)
+    for set_name in sorted_set_names:
+        chart.add(data_sets[set_name]["title"], data_sets[set_name]["data"])
+
+    chart.render_to_file(__report_path(program_runs) + "/all_runs_and_targets.svg")
+
+def __format_set_title(key):
+ return (key[:25] + '..') if len(key) > 25 else key
 
 def __target_chart(scenario_name, program_runs):
     chart = report.pygal_bar()
@@ -132,7 +193,7 @@ def __target_chart(scenario_name, program_runs):
     chart.title = scenario_name + ': action/s - program comparison'
     sorted_keys = sorted(entries)
     sorted_vals = map(lambda key: entries[key], sorted_keys)
-    chart.x_labels = map(lambda key: (key[:25] + '..') if len(key) > 25 else key, sorted_keys)
+    chart.x_labels = map(__format_set_title, sorted_keys)
     chart.add('Actions/s', sorted_vals)
     chart.render_to_file(__report_path(program_runs) + "/" + __scenario_chart_name(scenario_name) + ".svg")
 
