@@ -10,7 +10,7 @@ def pygal_line():
 
 def pygal_bar():
     # For custom styling see http://pygal.readthedocs.org/en/latest/documentation/custom_styles.html
-    chart = pygal.Bar(fill=False, style=CleanStyle, show_minor_x_labels=False, x_labels_major_count=10, x_label_rotation=90, width=1000, height=800, truncate_label=100)
+    chart = pygal.Bar(fill=False, style=CleanStyle, show_minor_x_labels=False, x_labels_major_count=10, x_label_rotation=90, width=1000, height=800, truncate_label=40,truncate_legend=40, legend_at_bottom=True)
     return chart
 
 def get_start_time(metrics):
@@ -80,8 +80,8 @@ def section_title(title, comment):
     <h2 style="font-weight: lighter">""" + title + """</h2><span style="font-style: italic">""" + comment + """</span><br/>
 """
 
-def link_title(file_path, title, sub_title):
-    return """<div class="link_title"><h3><a href="%s">%s</a></h3><span class="link_subtitle" style="font-style: italic">%s</span></div>""" % ("file://" + file_path, title, sub_title)
+def link_title(relative_file_path, title, sub_title):
+    return """<div class="link_title"><h3><a href="%s">%s</a></h3><span class="link_subtitle" style="font-style: italic">%s</span></div>""" % (relative_file_path, title, sub_title)
 
 def section(title, markup):
     return """<div class="section"><h2>%s</h2>%s</div>""" % (title, markup)

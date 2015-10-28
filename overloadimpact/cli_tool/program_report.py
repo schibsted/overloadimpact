@@ -80,7 +80,7 @@ def __page_markup(program_run_id, program_run):
     for config_run_name, config_run in config_runs.items():
         config_run_id = config_run["run_id"]
         link_title = "Config run (%s) %s" % (config_run_id, config_run_name)
-        run_list_markup += report.link_title(config_report.complete_report_url(config_run_id), link_title, __config_run_1line_summary(config_run)) + "<br/>"
+        run_list_markup += report.link_title(paths.relative_path(complete_report_url(program_run_id), config_report.complete_report_url(config_run_id)), link_title, __config_run_1line_summary(config_run)) + "<br/>"
     run_list_markup += """</div>"""
     markup += run_list_markup
 

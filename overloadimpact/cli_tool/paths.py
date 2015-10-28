@@ -1,5 +1,17 @@
 import os
 
+def first_diff_pos(a, b):
+    """
+    find the pos of first char that doesn't match
+    """
+    for i, c in enumerate(a):
+        if i >= len(b):
+            return i # return if reached end of b
+        if b[i] != a[i]:
+            return i # we have come to the first diff
+
+    return len(a) # we have reached the end of string a
+
 def determine_suite_dir():
     if "OIMP_SUITE_HOME" in os.environ:
         if os.path.isdir(os.environ["OIMP_SUITE_HOME"] + "/lua/scenarios"):
@@ -11,6 +23,14 @@ def determine_suite_dir():
         return current_path
     raise NameError('OIMP_SUITE dir not found. Set it as OIMP_SUITE_HOME env var, or execute from it\'s root dir.')
 
+def relative_path(from_path, to_path):
+    diff_pos = first_diff_pos(from_path, to_path)
+    if diff_pos == 0: # no relative path possible
+        return to_path
+    diff_path = from_path[diff_pos:]
+    num_slashes = diff_path.count("/")
+    rel_path = ("../" * num_slashes) + to_path[diff_pos:]
+    return rel_path
 
 def determine_run_data_dir():
     if "OIMP_SUITE_RUN_DATA_HOME" in os.environ:

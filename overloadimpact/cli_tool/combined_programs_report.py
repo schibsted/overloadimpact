@@ -77,7 +77,7 @@ def __program_runs_markup(program_runs):
     # list program_runs with links to them with a short one line summary
     run_list_markup = ""
     for program_run_id in program_runs:
-        run_list_markup += report.link_title(program_report.complete_report_url(program_run_id), "Program_run " + program_run_id, __program_run_1line_summary(program_runs[program_run_id]))
+        run_list_markup += report.link_title(paths.relative_path(__report_url(program_runs), program_report.complete_report_url(program_run_id)), "Program_run " + program_run_id, __program_run_1line_summary(program_runs[program_run_id]))
 
     markup += report.section("Program runs", run_list_markup)
     return markup
@@ -133,8 +133,17 @@ def __combined_target_chart(target_chart_scenarios, program_runs):
     data_sets = {}
     x_labels = []
     for set_name, set in sets.iteritems():
-        set_title = __format_set_title(set_name)
-        data_sets[set_name] = {"title": set_title, "data":[]}
+        data_sets[set_name] = {"data":[]}
+
+    shared_prefix = __shared_prefix(sets.keys())
+
+    for set_name in data_sets:
+        if shared_prefix:
+            shortened_set_name = set_name.replace(shared_prefix, "", 1)
+        else:
+            shortened_set_name = set_name
+        set_title = shortened_set_name
+        data_sets[set_name]["title"] = {"title": set_title, "data":[]}
 
     x_labels = []
     for scenario_name in target_chart_scenarios:
@@ -144,7 +153,7 @@ def __combined_target_chart(target_chart_scenarios, program_runs):
     # arrange data arrays according to sorted scenario_names
     for scenario_name in x_labels:
         for set_name, _set in sets.iteritems():
-            if scenario_name in sets[program_run_name]:
+            if (scenario_name in sets[program_run_name]) and (scenario_name in _set):
                 data_sets[set_name]["data"].append(_set[scenario_name])
             else:
                 data_sets[set_name]["data"].append(None)
@@ -157,8 +166,31 @@ def __combined_target_chart(target_chart_scenarios, program_runs):
 
     chart.render_to_file(__report_path(program_runs) + "/all_runs_and_targets.svg")
 
-def __format_set_title(key):
- return (key[:25] + '..') if len(key) > 25 else key
+def __shared_prefix(names):
+    """
+    find whatever shared prefix in names
+    """
+    shared_prefix = None
+    first_run = True
+    diff_pos = 0
+    for name in names:
+        if "Target" in name:
+            continue
+        if first_run: # set the proposed prefix to whole of first name
+            first_run = False
+            shared_prefix = name
+        else:
+            # find first character which is different
+            diff_pos = paths.first_diff_pos(shared_prefix, name)
+            if diff_pos == 0: # if first char is different then no shared_prefix exists
+                return None
+            else:
+                shared_prefix = name[:diff_pos] # cut shared_prefix off at first matching diff
+
+    return shared_prefix
+
+def __format_set_title(key, max_len = 100):
+ return (key[:(max_len-2)] + "..") if len(key) > max_len else key
 
 def __target_chart(scenario_name, program_runs):
     chart = report.pygal_bar()
