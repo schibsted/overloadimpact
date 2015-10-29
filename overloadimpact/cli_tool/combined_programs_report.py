@@ -5,9 +5,9 @@ import config_report
 import target
 import paths
 
-PROGRAM_BASE_DIR = paths.REPORTS_DIR + "/combined_program_runs"
-
 def generate(program_run_ids):
+    __prepare(program_run_ids)
+
     program_runs = {}
     for program_run_id in program_run_ids:
         program_report.generate_for_completed(program_run_id) # recreate reports
@@ -16,30 +16,30 @@ def generate(program_run_ids):
     __create_page(program_runs)
 
 def __create_page(program_runs):
-    __prepare(program_runs)
     report_file_path = __report_url(program_runs)
     file = open(report_file_path, 'w') # Trying to create a new file or open one
     file.write(__page_markup(program_runs))
     file.close()
     print("Wrote combined report to:\n" + report_file_path)
 
-def __dir_name(program_runs):
-    dir_name = ".".join(program_runs.keys())
+def __dir_name(program_run_ids):
+    dir_name = ".".join(sorted(program_run_ids))
     # limit dir name to 100
     return dir_name[:100]
 
 def __report_url(program_runs):
-    return __report_path(program_runs) + "/report.html"
+    return __report_path(program_runs.keys()) + "/report.html"
 
-def __report_path(program_runs):
-    return PROGRAM_BASE_DIR + "/" + __dir_name(program_runs)
+def __report_path(program_run_ids):
+    return paths.combined_program_reports_dir() + "/" + __dir_name(program_run_ids)
 
-def __prepare(program_runs):
-    report_path = __report_path(program_runs)
+def __prepare(program_run_ids):
+    report_path = __report_path(program_run_ids)
     try:
         os.mkdir(report_path)
     except:
         pass # print "Path exists: " + report_path
+    paths.set_sub_reports_prefix("combined_program_runs/" + __dir_name(program_run_ids))
 
 def __page_markup(program_runs):
     markup = report.header("Target report", "For all scenarios: actions/s results vs targets", "")
@@ -164,7 +164,7 @@ def __combined_target_chart(target_chart_scenarios, program_runs):
     for set_name in sorted_set_names:
         chart.add(data_sets[set_name]["title"], data_sets[set_name]["data"])
 
-    chart.render_to_file(__report_path(program_runs) + "/all_runs_and_targets.svg")
+    chart.render_to_file(__report_path(program_runs.keys()) + "/all_runs_and_targets.svg")
 
 def __shared_prefix(names):
     """
@@ -227,7 +227,7 @@ def __target_chart(scenario_name, program_runs):
     sorted_vals = map(lambda key: entries[key], sorted_keys)
     chart.x_labels = map(__format_set_title, sorted_keys)
     chart.add('Actions/s', sorted_vals)
-    chart.render_to_file(__report_path(program_runs) + "/" + __scenario_chart_name(scenario_name) + ".svg")
+    chart.render_to_file(__report_path(program_runs.keys()) + "/" + __scenario_chart_name(scenario_name) + ".svg")
 
 
     # Alternative implementation: Adding targets as separate data sets:

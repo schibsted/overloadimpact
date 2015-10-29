@@ -14,10 +14,6 @@ import math
 import report
 import paths
 
-RUNS_PATH = paths.RUNS_DIR
-REPORTS_PATH = paths.REPORTS_DIR
-CONFIG_RUNS_DIR = paths.RUNS_DIR + "/config_runs"
-
 # Make loadimpact class TestResult available in this scope
 TestResult = loadimpact.resources.TestResult
 
@@ -227,13 +223,13 @@ def __create_report_files(dir):
     shutil.copyfile(paths.REPORT_TEMPLATES_DIR + "/config_runs/timestamp.js", dir + "/runtime/timestamp.js")
 
 def __run_path(run_id):
-    return RUNS_PATH + "/config_runs/" + repr(run_id)
+    return paths.config_runs_dir() + "/" + repr(run_id)
 
 def __report_path(run_id):
-    return REPORTS_PATH + "/config_runs/" + repr(run_id)
+    return paths.config_reports_dir() + "/" + repr(run_id)
 
 def list_runs():
-    onlydirs = [ d for d in os.listdir(CONFIG_RUNS_DIR) if os.path.isdir(os.path.join(CONFIG_RUNS_DIR, d)) ]
+    onlydirs = [ d for d in os.listdir(paths.config_runs_dir()) if os.path.isdir(os.path.join(paths.config_runs_dir(), d)) ]
     for dir in onlydirs:
         print dir
 
@@ -262,10 +258,10 @@ def __get_config_run(run_id):
 def __prepare(run_id):
     report_path = __report_path(run_id)
     try:
-        os.mkdir(__run_path(run_id))
-        os.mkdir(report_path)
+        paths.mkdir_p(report_path)
         os.mkdir(report_path + "/runtime")
         os.mkdir(report_path + "/complete")
+        os.mkdir(__run_path(run_id))
     except:
         pass # print "Path exists: " + report_path
     __create_report_files(report_path)

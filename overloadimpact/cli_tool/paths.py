@@ -1,4 +1,5 @@
 import os
+import errno
 
 def first_diff_pos(a, b):
     """
@@ -53,6 +54,41 @@ def determine_run_data_reports_dir():
     if os.path.isdir(current_path + "/reports"):
         return current_path + "/reports"
     raise NameError('OIMP_SUITE_RUN_DATA dir not found. Set it as OIMP_SUITE_RUN_DATA_HOME env var, or execute from it\'s root dir.')
+
+def sub_reports_base_dir():
+    return REPORTS_DIR + sub_reports_prefix
+
+def program_reports_dir():
+    return sub_reports_base_dir() + "/program_runs"
+ 
+def config_reports_dir():
+    return sub_reports_base_dir() + "/config_runs"
+
+def combined_program_reports_dir():
+    return REPORTS_DIR + "/combined_program_runs"
+
+def runs_dir():
+    return RUNS_DIR
+
+def program_runs_dir():
+    return runs_dir() + "/program_runs"
+
+def config_runs_dir():
+    return runs_dir() + "/config_runs"
+
+sub_reports_prefix = ""
+def set_sub_reports_prefix(prefix):
+    global sub_reports_prefix
+    sub_reports_prefix = "/" + prefix
+
+
+def mkdir_p(path):
+    try:
+        os.makedirs(path)
+    except OSError as exc: # Python >2.5
+        if exc.errno == errno.EEXIST and os.path.isdir(path):
+            pass
+        else: raise
 
 SUITE_DIR = determine_suite_dir()
 

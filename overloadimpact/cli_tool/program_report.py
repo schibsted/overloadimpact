@@ -4,23 +4,18 @@ import report
 import json
 import paths
 
-REPORTS_PATH  = paths.REPORTS_DIR
-PROGRAM_BASE_DIR = REPORTS_PATH + "/program_runs"
-RUNS_PATH  = paths.RUNS_DIR
-PROGRAM_RUNS_BASE_DIR = RUNS_PATH + "/program_runs"
-
 def __read_program_run(program_run_id):
-    filepath = PROGRAM_RUNS_BASE_DIR + "/" + program_run_id + "/program_run.json"
+    filepath = paths.program_runs_dir() + "/" + program_run_id + "/program_run.json"
     with open(filepath) as data_file:
         return json.load(data_file)
 
 def __report_path(program_run_id):
-    return ("%s/%s" % (PROGRAM_BASE_DIR, program_run_id))
+    return ("%s/%s" % (paths.program_reports_dir(), program_run_id))
 
 def __prepare(program_run_id):
     report_path = __report_path(program_run_id)
     try:
-        os.mkdir(report_path)
+        paths.mkdir_p(report_path)
     except:
         pass # print "Path exists: " + report_path
 
@@ -65,9 +60,11 @@ def __generate(program_run_id, live_run):
     print("Complete report for program:\n" + complete_report_url(program_run_id))
 
 def list_runs():
-    onlydirs = [ d for d in os.listdir(PROGRAM_RUNS_BASE_DIR) if os.path.isdir(os.path.join(PROGRAM_RUNS_BASE_DIR, d)) ]
-    for dir in onlydirs:
-        print dir
+    onlydirs = [ d for d in os.listdir(paths.program_runs_dir()) if os.path.isdir(os.path.join(paths.program_runs_dir(), d)) ]
+    mtime = lambda d: os.stat(os.path.join(paths.program_runs_dir(), d)).st_mtime
+    sorted_dirs = list(sorted(onlydirs, key=mtime))
+    for dir in sorted_dirs:
+        print(dir)
 
 def __page_markup(program_run_id, program_run):
     title = "Program report for %s" % (program_run_id)
