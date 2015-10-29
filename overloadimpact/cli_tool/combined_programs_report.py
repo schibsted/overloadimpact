@@ -104,7 +104,10 @@ def __target_chart_scenarios(program_runs):
     return scenarios
 
 def __combined_target_chart(target_chart_scenarios, program_runs):
-    chart = report.pygal_bar()
+    bar_args = {}
+    if len(program_runs) > 5:
+        bar_args["truncate_legend"] = 30
+    chart = report.pygal_bar(**bar_args)
 
     # chart.x_labels = map(str, range(2002, 2013))
     # chart.add('Firefox', [None, None, 0, 16.6,   25,   31, 36.4, 45.5, 46.3, 42.8, 37.1])
@@ -117,7 +120,6 @@ def __combined_target_chart(target_chart_scenarios, program_runs):
         sets[target_title] = {}
         for scenario_name in target_chart_scenarios:
             sets[target_title][scenario_name] = target_arr[scenario_name]['actions-per-sec']
-
 
     for program_run_name, program_run in program_runs.iteritems():
         sets[program_run_name] = {}
@@ -174,7 +176,7 @@ def __shared_prefix(names):
     first_run = True
     diff_pos = 0
     for name in names:
-        if "Target" in name:
+        if "Target" in name or "TARGET" in name:
             continue
         if first_run: # set the proposed prefix to whole of first name
             first_run = False
@@ -225,7 +227,11 @@ def __target_chart(scenario_name, program_runs):
     chart.title = scenario_name + ': action/s - program comparison'
     sorted_keys = sorted(entries)
     sorted_vals = map(lambda key: entries[key], sorted_keys)
-    chart.x_labels = map(__format_set_title, sorted_keys)
+
+    # format x_labels
+    shared_prefix = __shared_prefix(sorted_keys)
+    chart.x_labels = map(lambda key: key.replace(shared_prefix, "", 1) if shared_prefix else key, map(__format_set_title, sorted_keys))
+
     chart.add('Actions/s', sorted_vals)
     chart.render_to_file(__report_path(program_runs.keys()) + "/" + __scenario_chart_name(scenario_name) + ".svg")
 

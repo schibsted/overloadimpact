@@ -8,9 +8,13 @@ def pygal_line():
     chart = pygal.Line(fill=False, style=CleanStyle, show_minor_x_labels=False, x_labels_major_count=10, x_label_rotation=90, width=1000, height=500)
     return chart
 
-def pygal_bar():
+def pygal_bar(**kwargs):
+    args = {"fill": False, "style": CleanStyle, "show_minor_x_labels": False, "x_labels_major_count": 10, "x_label_rotation": 90, "width": 1000, "height": 800, "truncate_label": 40, "truncate_legend": 40, "legend_at_bottom": True}
+    for key, val in kwargs.items():
+        if key in args:
+            args[key] = val
     # For custom styling see http://pygal.readthedocs.org/en/latest/documentation/custom_styles.html
-    chart = pygal.Bar(fill=False, style=CleanStyle, show_minor_x_labels=False, x_labels_major_count=10, x_label_rotation=90, width=1000, height=800, truncate_label=40,truncate_legend=40, legend_at_bottom=True)
+    chart = pygal.Bar(**args)
     return chart
 
 def get_start_time(metrics):
