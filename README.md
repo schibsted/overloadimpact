@@ -36,17 +36,43 @@ The first time you run oimp you will need to set a suite dir. If you run oimp no
 ```
 $ oimp
 Traceback (most recent call last):
-NameError: OIMP_SUITE dir not found. Set it as OIMP_SUITE_HOME env var, or execute from it's root dir. You can create a suite by running.
+NameError: OIMP_SUITE dir not found. Set it as OIMP_SUITE_HOME env var, or execute from it's root dir. You can set up a new project with: oimp setup_project [name] [destination path].
 ```
 
-To fix this create a suite by running:
+To create a suite, run oimp setup_project:
 
 ```
-oimp setup_project foo /path/to/parent_of_foo
-Add OIMP_SUITE_HOME=/path/to/parent_of_foo/foo_oimp_suite and OIMP_SUITE_RUN_DATA_HOME=/path/to/parent_of_foo/foo_oimp_suite_run_data to your environment variables.
+$ oimp setup_project bar /tmp/foo
+OIMP_PROJECT dir not found. Set it as OIMP_PROJECT_HOME env var, or execute from it's root dir.
+You can set up a new project with: oimp setup_project [name] [destination path].
+
+Project home (/tmp/foo/bar_oimp_suite) and project run data home (/tmp/foo/bar_oimp_suite_run_data) successfully created.
+
+Add OIMP_PROJECT_HOME=/tmp/foo/bar_oimp_suite and OIMP_PROJECT_RUN_DATA_HOME=/tmp/foo/bar_oimp_suite_run_data to your environment variables.
 ```
 
-Add the environment vars as instructed.
+We add the environment vars as instructed.
+
+```
+$ export OIMP_PROJECT_HOME=/tmp/foo/bar_oimp_suite
+$ export OIMP_PROJECT_RUN_DATA_HOME=/tmp/foo/bar_oimp_suite_run_data
+```
+
+To test that it is working, you can list the example programs created as part of the example project:
+
+```
+$ oimp program
+                                        PROGRAM
+-----------------  -------------------  ----------------------------------------------------
+example-program-1
+                   example-config-1     1000/10/5
+                   _        scenarios:  (example-scenario-2 (70%), example-scenario-3 (30%))
+
+example-program-2
+                   example-config-1     1500/10/5
+                   _        scenarios:  (example-scenario-2 (70%), example-scenario-3 (30%))
+
+```
 
 Run `oimp` with no arguments to see all available commands.
 
