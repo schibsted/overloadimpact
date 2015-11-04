@@ -14,15 +14,17 @@ def first_diff_pos(a, b):
     return len(a) # we have reached the end of string a
 
 def determine_suite_dir():
-    if "OIMP_SUITE_HOME" in os.environ:
-        if os.path.isdir(os.environ["OIMP_SUITE_HOME"] + "/lua/scenarios"):
-            return os.environ["OIMP_SUITE_HOME"]
-    raise NameError('OIMP_SUITE dir not found. Set it as OIMP_SUITE_HOME env var, or execute from it\'s root dir.')
+    if "OIMP_PROJECT_HOME" in os.environ:
+        if os.path.isdir(os.environ["OIMP_PROJECT_HOME"] + "/lua/scenarios"):
+            return os.environ["OIMP_PROJECT_HOME"]
+    print('OIMP_PROJECT dir not found. Set it as OIMP_PROJECT_HOME env var, or execute from it\'s root dir.\nYou can set up a new project with: oimp setup_project [name] [destination path].')
+    return False
     # if we have executed this command from a oimp-suite dir then it will contain /lua/scenarios
     current_path = os.getcwd()
     if os.path.isdir(current_path + "/lua/scenarios"):
         return current_path
-    raise NameError('OIMP_SUITE dir not found. Set it as OIMP_SUITE_HOME env var, or execute from it\'s root dir.')
+    print('OIMP_PROJECT dir not found. Set it as OIMP_PROJECT_HOME env var, or execute from it\'s root dir.\nYou can set up a new project with: oimp setup_project [name] [destination path].')
+    return False
 
 def relative_path(from_path, to_path):
     diff_pos = first_diff_pos(from_path, to_path)
@@ -34,26 +36,30 @@ def relative_path(from_path, to_path):
     return rel_path
 
 def determine_run_data_dir():
-    if "OIMP_SUITE_RUN_DATA_HOME" in os.environ:
-        if os.path.isdir(os.environ["OIMP_SUITE_RUN_DATA_HOME"] + "/runs"):
-            return os.environ["OIMP_SUITE_RUN_DATA_HOME"] + "/runs"
-        raise NameError('OIMP_SUITE_RUN_DATA dir not found. Set it as OIMP_SUITE_RUN_DATA_HOME env var, or execute from it\'s root dir.')
+    if "OIMP_PROJECT_RUN_DATA_HOME" in os.environ:
+        if os.path.isdir(os.environ["OIMP_PROJECT_RUN_DATA_HOME"] + "/runs"):
+            return os.environ["OIMP_PROJECT_RUN_DATA_HOME"] + "/runs"
+        print('OIMP_PROJECT_RUN_DATA dir not found. Set it as OIMP_PROJECT_RUN_DATA_HOME env var, or execute from it\'s root dir.\nYou can set up a new project with: oimp setup_project [name] [destination path].')
+        return False
     # if we have executed this command from a oimp-suite dir then it will contain /lua/scenarios
     current_path = os.getcwd()
     if os.path.isdir(current_path + "/runs"):
         return current_path + "/runs"
-    raise NameError('OIMP_SUITE_RUN_DATA dir not found. Set it as OIMP_SUITE_RUN_DATA_HOME env var, or execute from it\'s root dir.')
+    print('OIMP_PROJECT_RUN_DATA dir not found. Set it as OIMP_PROJECT_RUN_DATA_HOME env var, or execute from it\'s root dir.\nYou can set up a new project with: oimp setup_project [name] [destination path].')
+    return False
 
 def determine_run_data_reports_dir():
-    if "OIMP_SUITE_RUN_DATA_HOME" in os.environ:
-        if os.path.isdir(os.environ["OIMP_SUITE_RUN_DATA_HOME"] + "/reports"):
-            return os.environ["OIMP_SUITE_RUN_DATA_HOME"] + "/reports"
-        raise NameError('OIMP_SUITE_RUN_DATA dir not found. Set it as OIMP_SUITE_RUN_DATA_HOME env var, or execute from it\'s root dir.')
+    if "OIMP_PROJECT_RUN_DATA_HOME" in os.environ:
+        if os.path.isdir(os.environ["OIMP_PROJECT_RUN_DATA_HOME"] + "/reports"):
+            return os.environ["OIMP_PROJECT_RUN_DATA_HOME"] + "/reports"
+        print('OIMP_PROJECT_RUN_DATA dir not found. Set it as OIMP_PROJECT_RUN_DATA_HOME env var, or execute from it\'s root dir.\nYou can set up a new project with: oimp setup_project [name] [destination path].')
+        return False
     # if we have executed this command from a oimp-suite dir then it will contain /lua/scenarios
     current_path = os.getcwd()
     if os.path.isdir(current_path + "/reports"):
         return current_path + "/reports"
-    raise NameError('OIMP_SUITE_RUN_DATA dir not found. Set it as OIMP_SUITE_RUN_DATA_HOME env var, or execute from it\'s root dir.')
+    print('OIMP_PROJECT_RUN_DATA dir not found. Set it as OIMP_PROJECT_RUN_DATA_HOME env var, or execute from it\'s root dir.\nYou can set up a new project with: oimp setup_project [name] [destination path].')
+    return False
 
 def sub_reports_base_dir():
     return REPORTS_DIR + sub_reports_prefix
@@ -90,20 +96,23 @@ def mkdir_p(path):
             pass
         else: raise
 
+def suite_defined():
+    return SUITE_DIR
+
+COMMON_LIB_DIR = os.path.dirname(os.path.realpath(__file__)) + "/../lua/lib"
+REPORT_TEMPLATES_DIR = os.path.dirname(os.path.abspath(__file__)) + "/reports/templates"
+
 SUITE_DIR = determine_suite_dir()
 
-SCENARIOS_CODE_DIR = SUITE_DIR + "/lua/scenarios"
-SUITE_LIB_DIR = SUITE_DIR + "/lua/lib"
-COMMON_LIB_DIR = os.path.dirname(os.path.realpath(__file__)) + "/../lua/lib"
-# COMMON_LIB_DIR = os.path.abspath(BASE_DIR + '/../lua/lib')
+if SUITE_DIR:
+    SCENARIOS_CODE_DIR = SUITE_DIR + "/lua/scenarios"
+    SUITE_LIB_DIR = SUITE_DIR + "/lua/lib"
 
-CONFIGS_FILE   = SUITE_DIR + '/suite_config/configs.yaml'
-SCENARIOS_FILE = SUITE_DIR + '/suite_config/scenarios.yaml'
-TARGETS_FILE   = SUITE_DIR + '/suite_config/targets.yaml'
-PROGRAMS_PATH    = SUITE_DIR + '/suite_config/programs/%s.yaml'
-SEQUENCE_PATH  = SUITE_DIR + '/suite_config/sequences/%s.yaml'
+    CONFIGS_FILE   = SUITE_DIR + '/suite_config/configs.yaml'
+    SCENARIOS_FILE = SUITE_DIR + '/suite_config/scenarios.yaml'
+    TARGETS_FILE   = SUITE_DIR + '/suite_config/targets.yaml'
+    PROGRAMS_PATH    = SUITE_DIR + '/suite_config/programs/%s.yaml'
+    SEQUENCE_PATH  = SUITE_DIR + '/suite_config/sequences/%s.yaml'
 
-REPORTS_DIR = determine_run_data_reports_dir()
-RUNS_DIR = determine_run_data_dir()
-
-REPORT_TEMPLATES_DIR = os.path.dirname(os.path.abspath(__file__)) + "/reports/templates"
+    REPORTS_DIR = determine_run_data_reports_dir()
+    RUNS_DIR = determine_run_data_dir()

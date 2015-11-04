@@ -1,17 +1,10 @@
 #!/usr/bin/env python
-import program
-import program_report
-import config_report
-import combined_programs_report
-import scenario
-import project
-import target
-import sequence
-import test_config
-import api_method
+import paths
 import re
 
 def sequencecmd(name, run_description):
+    if not paths.suite_defined(): return # cannot run without project env defined
+    import sequence
     if name:
         if not run_description:
             print("Add a second argument to describe the program execution, e.g.: '40 web fronts, Redis backend'")
@@ -21,6 +14,8 @@ def sequencecmd(name, run_description):
         sequence.show_sequences()
 
 def programcmd(name, run_description):
+    if not paths.suite_defined(): return # cannot run without project env defined
+    import program
     if name:
         if not run_description:
             print("Add a second argument to describe the program execution, e.g.: '40 web fronts, Redis backend'")
@@ -30,6 +25,8 @@ def programcmd(name, run_description):
         program.show_programs()
 
 def scenariocmd(action, name):
+    if not paths.suite_defined(): return # cannot run without project env defined
+    import scenario
     if action == "validate":
         if name:
             scenario.validate(name)
@@ -50,18 +47,25 @@ To update a scenario:
 oimp scenario update [name]""")
 
 def targetcmd():
+    if not paths.suite_defined(): return # cannot run without project env defined
+    import target
     target.show_targets()
 
 def test_configcmd(name):
+    if not paths.suite_defined(): return # cannot run without project env defined
+    import test_config
     if name:
         configs = test_config.get_configs()
         config  = configs[name]
         run_id  = test_config.start(config['id'])
-        # config_report.start_report(run_id, name)
+        # config_report.start_report(run_id, name) # disabled dynamic reporting for now
     else:
         test_config.show_configs()
 
 def program_reportcmd(action, program_run_id):
+    if not paths.suite_defined(): return # cannot run without project env defined
+    import program_report
+    import combined_programs_report
     if action == "running":
         program_report.generate_for_running(program_run_id)
     elif action == "completed":
@@ -73,6 +77,8 @@ def program_reportcmd(action, program_run_id):
         program_report.list_runs()
 
 def test_config_reportcmd(action, run_id, title):
+    if not paths.suite_defined(): return # cannot run without project env defined
+    import config_report
     if action == "running":
         config_report.generate_for_running_by_id(run_id, title)
     if action == "completed":
@@ -82,11 +88,14 @@ def test_config_reportcmd(action, run_id, title):
         config_report.list_runs()
 
 def api_methodcmd(name, args):
+    if not paths.suite_defined(): return # cannot run without project env defined
+    import api_method
     if name:
         api_method.run_method(name, args)
     else:
         api_method.show_methods()
 
 def setup_project_reportcmd(name, dest_dir):
+    import project
     project.setup(re.sub(r'\W+', '', name), dest_dir)
 

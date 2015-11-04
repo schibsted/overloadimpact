@@ -10,4 +10,7 @@ def setup(name, dest_dir):
     suite_run_data_dir = os.path.abspath("%s/%s_oimp_suite_run_data" % (dest_dir, name))
     os.system("cp -rf %s/oimp_suite %s" % (defaults_base_path, suite_dir))
     os.system("cp -rf %s/oimp_suite_run_data %s" % (defaults_base_path, suite_run_data_dir))
-    print("Add OIMP_SUITE_HOME=%s and OIMP_SUITE_RUN_DATA_HOME=%s to your environment variables." % (suite_dir, suite_run_data_dir))
+    print("")
+    print("Project home (%s) and project run data home (%s) successfully created." % (suite_dir, suite_run_data_dir))
+    print("")
+    print("Add OIMP_PROJECT_HOME=%s and OIMP_PROJECT_RUN_DATA_HOME=%s to your environment variables." % (suite_dir, suite_run_data_dir))
