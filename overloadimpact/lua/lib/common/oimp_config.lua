@@ -4,7 +4,7 @@ oimp_config = {}
 oimp_config.DO_DEBUG = false
 oimp_config.DO_ERR = true
 
-oimp_config.METRICS_TAG = 'app.'
+oimp_config.METRICS_TAG = 'app'
 oimp_config.PROFILE_EACH = 1000
 oimp_config.RESPONSE_SIZE = 123456789
 

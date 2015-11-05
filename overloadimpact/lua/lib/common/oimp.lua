@@ -1,10 +1,16 @@
 oimp = {}
-oimp.TOP_PAGE = "app"
-oimp.BASE_PAGE = "base"
+oimp.TOP_PAGE = "top"
 oimp.start_time = util.time()
 oimp.started = {}
 oimp.tot_requests = 0
 oimp.last_request = nil
+oimp.scenario_name = nil -- to be set by oimp.top
+oimp.top_pass_val = 1
+-- oimp.top_pass_val can be set to 0 to indicate failure, but normally failure is done by:
+--
+-- oimp.done(0)
+-- return
+--
 
 function oimp.should_log()
   return client.get_id() == 1
@@ -51,6 +57,7 @@ function oimp.error(msg)
   end
 end
 
+-- we must only set pass metric once for each test, to get correct pass counts
 oimp.top_pass_set_already = false
 
 function oimp.top_pass(pass)
@@ -82,9 +89,9 @@ function oimp.metric(name, value)
     return
   end
 
-  result.custom_metric(oimp_config.METRICS_TAG .. name, value)
+  result.custom_metric(oimp_config.METRICS_TAG .. "." .. name, value)
   if oimp_config.LOG_METRICS then
-    log.info('METRIC', oimp_config.METRICS_TAG .. name, ':', value)
+    log.info('METRIC', oimp_config.METRICS_TAG .. "." .. name, ':', value)
   end
 end
 
@@ -116,8 +123,8 @@ end
 
 -- Perform a negative test. It returns false if the value matches the failure one.
 function oimp.fail(page, metric, value, failure)
-  if not page then -- if _page nil then use default base_page
-    page = oimp.BASE_PAGE
+  if not page then -- if _page nil then use default top_page
+    page = oimp.TOP_PAGE
   end
   local _page = page .. '.' .. metric
   if value == failure then
@@ -173,18 +180,15 @@ function oimp.request(page, request, is_core_action)
   return res
 end
 
-oimp.scenario_name = nil -- to be set by oimp.top
-oimp.top_pass_val = 1
-
 function oimp.top(scenario)
   oimp.scenario_name = "scenario_" .. scenario -- store global var
   oimp.start(oimp.scenario_name)
-  http.page_start(oimp_config.METRICS_TAG .. oimp.scenario_name)
+  http.page_start(oimp_config.METRICS_TAG .. "." .. oimp.scenario_name)
 end
 
 -- This function is called once, from oimp.top() on script start
 function oimp.start(page)
-  oimp.before(oimp.TOP_PAGE)
+  oimp.before(oimp.PAGE_DOMAIN)
   oimp.before(page)
 end
 
@@ -201,9 +205,9 @@ function oimp.done(pass)
     log.error('Started for page ' .. page .. ' was not found.')
   end
 
-  http.page_end(oimp_config.METRICS_TAG .. page)
+  http.page_end(oimp_config.METRICS_TAG .. "." .. page)
   http.page_end(page)
-  http.page_end(oimp.TOP_PAGE)
+  http.page_end(oimp.PAGE_DOMAIN)
 
   if pass ~= nil then
     oimp.top_pass(pass)
@@ -211,6 +215,6 @@ function oimp.done(pass)
 end
 
 function oimp.bottom(scenario)
-  oimp.pass(oimp.TOP_PAGE, 'check', oimp.top_pass_val, 1)
+  oimp.pass(oimp.PAGE_DOMAIN, 'check', oimp.top_pass_val, 1)
   oimp.done(oimp.top_pass_val)
 end
