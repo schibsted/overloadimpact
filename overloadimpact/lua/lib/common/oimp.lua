@@ -183,12 +183,14 @@ end
 function oimp.top(scenario)
   oimp.scenario_name = "scenario_" .. scenario -- store global var
   oimp.start(oimp.scenario_name)
+  foo = oimp_config.METRICS_TAG .. "." .. oimp.scenario_name
+  oimp.info("foo:" .. foo)
   http.page_start(oimp_config.METRICS_TAG .. "." .. oimp.scenario_name)
 end
 
 -- This function is called once, from oimp.top() on script start
 function oimp.start(page)
-  oimp.before(oimp.PAGE_DOMAIN)
+  oimp.before(oimp.METRICS_TAG)
   oimp.before(page)
 end
 
@@ -207,7 +209,7 @@ function oimp.done(pass)
 
   http.page_end(oimp_config.METRICS_TAG .. "." .. page)
   http.page_end(page)
-  http.page_end(oimp.PAGE_DOMAIN)
+  http.page_end(oimp.METRICS_TAG)
 
   if pass ~= nil then
     oimp.top_pass(pass)
@@ -215,6 +217,6 @@ function oimp.done(pass)
 end
 
 function oimp.bottom(scenario)
-  oimp.pass(oimp.PAGE_DOMAIN, 'check', oimp.top_pass_val, 1)
+  oimp.pass(oimp.METRICS_TAG, 'check', oimp.top_pass_val, 1)
   oimp.done(oimp.top_pass_val)
 end
