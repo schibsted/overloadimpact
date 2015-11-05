@@ -144,7 +144,6 @@ class UpdateMixin(object):
             new_data_stores = []
             for data_store in data["data_stores"]:
                 new_data_stores.append(data_store["id"])
-            print("new_data_stores:" + repr(new_data_stores))
             data["data_stores"] = new_data_stores
 
         response = self.client.put(self.__class__._path(resource_id=self.id),

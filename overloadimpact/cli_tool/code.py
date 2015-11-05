@@ -44,7 +44,7 @@ def __load_imports(file, code):
                 'You already start importing %s in %s.'
                 % (lib, imports[lib])
             )
-        print('    Importing %s' % (name))
+        # print('    Importing %s' % (name))
         imports[lib] = file
         text = __import_file(lib, False)
         code = code.replace(line, text, 1)
@@ -126,7 +126,7 @@ def json_get(url):
 def __get_validate_results(validation):
     stream = validation.result_stream()
     results = {}
-    print("Starting validation #%d..." % (validation.id,))
+
     # This loop duplicates some result lines, but in any case it gives us some useful info, TODO FIX using offset
     for result in stream:
         if result['offset'] in results:
@@ -165,13 +165,15 @@ def __save_validation_results(validation, results):
 
 def validate(user_scenario):
     validation = user_scenario.validate()
+    print("Starting validation #%d..." % (validation.id,))
     while True:
+        print ".",
         try:
             time.sleep(2) # No results ready first two seconds
             __get_validate_results(validation)
             break
         except ValueError: # This happens if results are not yet ready
-            print "Updates not ready yet"
+            pass
 
 def update(id, name):
     user_scenario = liclient.client.get_user_scenario(id)
