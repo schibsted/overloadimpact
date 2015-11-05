@@ -1,5 +1,6 @@
-
 oimp = {}
+oimp.TOP_PAGE = "app"
+oimp.BASE_PAGE = "base"
 oimp.start_time = util.time()
 oimp.started = {}
 oimp.tot_requests = 0
@@ -61,7 +62,7 @@ function oimp.top_pass(pass)
     oimp.info("top_pass " .. pass)
   end
   oimp.metric('pass', pass)
-  oimp.metric(scenario_name .. '.pass', pass)
+  oimp.metric(oimp.scenario_name .. '.pass', pass)
 end
 
 function oimp.profile(uri, trace)
@@ -115,13 +116,16 @@ end
 
 -- Perform a negative test. It returns false if the value matches the failure one.
 function oimp.fail(page, metric, value, failure)
-  local page = page .. '.' .. metric
+  if not page then -- if _page nil then use default base_page
+    page = oimp.BASE_PAGE
+  end
+  local _page = page .. '.' .. metric
   if value == failure then
     oimp.error('Value ' .. metric .. ' failed. Got ' .. tostring(value) .. '.')
-    oimp.metric(page .. '.pass', 0)
+    oimp.metric(_page .. '.pass', 0)
     return true
   else
-    oimp.metric(page .. '.pass', 1)
+    oimp.metric(_page .. '.pass', 1)
     return
   end
 end
@@ -169,27 +173,25 @@ function oimp.request(page, request, is_core_action)
   return res
 end
 
-top_page = "app"
-page = top_page -- legacy alias
-scenario_name = nil -- to be set by oimp.top
-top_pass = 1
+oimp.scenario_name = nil -- to be set by oimp.top
+oimp.top_pass_val = 1
 
 function oimp.top(scenario)
-  scenario_name = "scenario_" .. scenario -- store global var
-  oimp.start(scenario_name)
-  http.page_start(oimp_config.METRICS_TAG .. scenario_name)
+  oimp.scenario_name = "scenario_" .. scenario -- store global var
+  oimp.start(oimp.scenario_name)
+  http.page_start(oimp_config.METRICS_TAG .. oimp.scenario_name)
 end
 
 -- This function is called once, from oimp.top() on script start
 function oimp.start(page)
-  oimp.before(top_page)
+  oimp.before(oimp.TOP_PAGE)
   oimp.before(page)
 end
 
 
 function oimp.done(pass)
   oimp.metric('total_requests', oimp.tot_requests)
-  page = scenario_name
+  local page = oimp.scenario_name
   local started = oimp.started[page]
   if started then
     local stopped = util.time() - oimp.start_time
@@ -201,7 +203,7 @@ function oimp.done(pass)
 
   http.page_end(oimp_config.METRICS_TAG .. page)
   http.page_end(page)
-  http.page_end(top_page)
+  http.page_end(oimp.TOP_PAGE)
 
   if pass ~= nil then
     oimp.top_pass(pass)
@@ -209,6 +211,6 @@ function oimp.done(pass)
 end
 
 function oimp.bottom(scenario)
-  oimp.pass(top_page, 'check', top_pass, 1)
-  oimp.done(top_pass)
+  oimp.pass(oimp.TOP_PAGE, 'check', oimp.top_pass_val, 1)
+  oimp.done(oimp.top_pass_val)
 end
