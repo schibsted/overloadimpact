@@ -91,8 +91,9 @@ USAGE:
       oimp help
 ```
 
-## Future Ideas
+## TODO / Future Ideas
 
+* All command failures and exits should have a sensible error message.
 * Enable local running of scenarios. Does not seem too complicated as all request calls are already wrapped in oimp.request(). For local running we could use the luasocket http library (<http://w3.impa.br/~diego/software/luasocket/http.html>) instead, which might be what is actually used by LoadImpact because the function calls are very similar.
 
 ## Troubleshooting
