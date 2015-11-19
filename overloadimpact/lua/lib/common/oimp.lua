@@ -67,7 +67,7 @@ function oimp.done(pass)
 end
 
 
--- we must only set pass metric once for each test, to get correct pass counts
+-- flag to ensure we only set pass metric once for each test, to get correct pass counts
 oimp.top_pass_set_already = false
 
 -- Private function to report a metric on whether this scenario as a whole failed or passed.
@@ -82,7 +82,6 @@ function oimp.__top_pass(pass)
   oimp.metric('pass', pass)
   oimp.metric(oimp.scenario_name .. '.pass', pass)
 end
-
 
 ---------------------------------------------------------------------------------------------
 -- Result check functions

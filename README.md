@@ -30,6 +30,9 @@ Add to your shell profile file to avoid doing this all the time.
 
 ## Concepts and terminology
 
+#### oimp
+The overloadimpact command line tool for is called ```oimp```. The main lua lib for writing scenarios is also called ```oimp```.
+
 #### scenario
 The user scenario concept is defined by LoadImpact. It is a a file of lua code performing some user interaction.
 
@@ -58,7 +61,7 @@ To be able to write and run load impact tests you must first set up a project wi
 
 #### project_run_data_dir
 
-This dir holds the record of executed tests and the reports generated after the test runs. The project_run_data_dir is set up with ```oimp setup_project``` as explained below.
+This dir holds the record of executed test_config and the reports generated after the test_config runs. The project_run_data_dir is set up with ```oimp setup_project``` as explained below.
 
 ## Usage
 
@@ -198,9 +201,11 @@ USAGE:
 
 ## Writing scenarios
 
+### Example scenario
+
 When a project is set up with oimp setup_project, an example scenario called example-scenario-1.lua has been created.
 
-Example test example-scenario-1.lua:
+Here is the content of example-scenario-1.lua:
 ```
 local foo_res = foo.foo_request("bar")
 if oimp.fail(page, 'foo_request', foo_res, nil) then
@@ -218,23 +223,117 @@ foo.some_var = "bar"
 function foo.some_request(foo_param)
   local page = "foo_index"
   local users_ds  = datastore.open('users-DS_VERSION') -- get a versioned users DS
-  user = users_ds:get_random()
-  return oimp.request(page, {
+  local user = users_ds:get_random()
+  local url = "http://www.examplefoo.com/index.html?user_email=" .. url.escape(user[1]) .. "&foo=" .. url.escape(foo_param)
+  return oimp.request(page,
+                      {
                         'GET',
-                        "http://www.examplefoo.com/index.html?user_email=" .. url.escape(user[1]) .. "&foo=" .. url.escape(foo_param)
-  },
-                      true -- is_core_action = true, mark this request as the core action to be counted for this scenario
+                        url,
+                      },
+                      true -- is_core_action = true, signals that this the core action of this scenario
   )
 end
 ```
 
-### Core action count
+### Libs
 
-Some scenarios will iterate over some action multiple times. An example is an API endpoint test which first obtains a an API token, an then uses this token 100 times to hit the endpoint. In this case we must mark this request to be counted, in order to get a total count of actions performed.
+OverloadImpact provide some general utility libs.
+
+* [oimp](overloadimpact/lua/lib/common/oimp.lua) provides a few general functions for writing tests with metrics.
+* [logger](overloadimpact/lua/lib/common/logger.lua) provides logger functions.
+* [cookies](overloadimpact/lua/lib/common/cookies.lua) provides cookie manipulation functions.
+* [redirect](overloadimpact/lua/lib/common/redirect.lua) provides redirect looping functions, especially useful when doing custom cookie handling.
+
+#### Lib loading
+
+The default libs are always loaded. You can also add your own custom libs. An example is the foo lib created in your_oimp_project_dir/lua/lib/foo/foo.lua. It is loaded since it is included in your_oimp_project_dir/lua/lib/includes.lua:
+
+```
+-- Add your includes here. "foo" is a subdir in in this dir.
+--- import foo/foo.lua"
+```
+
+### Metrics
+
+OverloadImpact bases the statistics and charts gathered on data obtained through the LoadImpact API. Some of the data is default metrics, some of it is custom metrics created by oimp lib functions.
+
+#### Page argument
+
+To a number of the oimp functions we pass a page argument. This argument is a tag for timing and correctness metrics. E.g. if you are doing a POST request of a pupil in a school API, you could call set page to 'pupil_create'.
+
+#### Correctness
+
+The correctness metric is the average success rate across all scenario runs. To signal that a scenario fails you must do two things:
+
+Call ```oimp.done(0)``` and return from the top scope. In example-scenario1.lua we see:
+
+```
+local foo_res = foo.foo_request("bar")
+if oimp.fail(page, 'foo_request', foo_res, nil) then
+  oimp.done(0)
+  return
+end
+```
+
+A scenario which does not return will mark the test as successful in its generated footer functions. A scenario which does not call ```oimp.done()``` is not reporting its correctness rate.
+
+We will now explain some useful oimp functions found in the [oimp utilities lib](overloadimpact/lua/lib/common/oimp.lua).
+
+##### Result check functions
+These are functions for evaluating values.
+
+###### oimp.fail(page, metric_tag, value, failure)
+Perform a negative test. It returns false if the value matches the failure one. Example:
+```
+local foo_res = foo.foo_request("bar")
+if oimp.fail(page, 'foo_request', foo_res, nil) then
+  oimp.done(0)
+  return
+end
+```
+
+###### oimp.check_status(page, res, expected)
+Test if request result status_code matched the expected status_code
+```
+local foo_res = foo.foo_request("bar")
+if not oimp.check_status(page, foo_res, 200) then
+  oimp.done(0)
+  return
+end
+```
+
+###### oimp.pass(page, metric_tag, value, correct)
+Perform a positive test. It returns true if the value matches the correct one, adding a pass value
+for this specific metric_tag. It calls oimp.error() on failure.
+```
+local foo_res = foo.foo_request("bar")
+if oimp.pass(page, "foo_index", foo_res['status_code'], 200) then
+   -- do something
+else
+  oimp.done(0)
+  return
+end
+```
+
+
+#### Core action count
+
+Some scenarios will iterate over some action multiple times. An example could be an API endpoint test which first obtains a an API token, an then uses this token 100 times to hit the endpoint. In this case we must mark this request to be counted, in order to get a total count of actions performed.
+
+#### xhprof profiling
+
+You can trigger xhprof profiling of a request by using oimp.profile(). For every X (defined by the int var oimp_config.PROFILE_EACH) executions approximately one will get supplied an ```_x=page_name``` argument, in order to trigger xhprof. It is not supplied to every request to prevent profiling slowing down the service.
+
+An example:
+
+```
+url = oimp.profile(url, page)
+```
 
 ## TODO / Future Ideas
 
-* All command failures and exits should have a sensible error message.
+* Improve our inexpert lua and python code.
+* All python command failures and exits should have a sensible error message.
 * Enable local running of scenarios. Does not seem too complicated as all request calls are already wrapped in oimp.request(). For local running we could use the luasocket http library (<http://w3.impa.br/~diego/software/luasocket/http.html>) instead, which might be what is actually used by LoadImpact because the function calls are very similar.
 
 ## Troubleshooting
