@@ -5,7 +5,7 @@ function inspect.inspect(key, val, indent)
   -- if LOG_DEBUG == false then return end
   indent = indent or 0
   local pad = string.rep("--", indent)
-  log.debug(pad .. "--> ", key, "(" .. type(val) .. ")", val)
+  logger.debug(pad .. "--> ", key, "(" .. type(val) .. ")", val)
 
   if type(val) == "table" then
     for k, v in pairs(val) do

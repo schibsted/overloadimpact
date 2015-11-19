@@ -44,7 +44,7 @@ function cookies.capture_redirect(page, start_res, capture_key, destination_rege
   if cookies.MANUAL_HANDLING then
     local status_code = start_res.status_code
     local next_location = start_res.headers['Location'][1]
-    oimp.debug("cookie_cap first next_location:" .. next_location)
+    logger.debug("cookie_cap first next_location:" .. next_location)
     local counter = 0
 
     current_res = start_res
@@ -69,7 +69,7 @@ function cookies.capture_redirect(page, start_res, capture_key, destination_rege
         next_location = current_res.headers['Location'][1]
       else
         -- url = current_res.url
-        -- oimp.info("url:" .. url)
+        -- logger.info("url:" .. url)
       end
     end
 
@@ -82,9 +82,9 @@ end
 
 function cookies.cookie_headers()
   if cookies.global_cookies then
-    oimp.debug("headers global_cookies:" .. json.stringify(cookies.global_cookies))
+    logger.debug("headers global_cookies:" .. json.stringify(cookies.global_cookies))
   else
-    oimp.debug("headers global_cookies: nil")
+    logger.debug("headers global_cookies: nil")
   end
   if cookies.MANUAL_HANDLING then
     headers = {}
