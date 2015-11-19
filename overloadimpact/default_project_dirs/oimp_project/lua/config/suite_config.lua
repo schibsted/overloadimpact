@@ -15,4 +15,4 @@
 -- oimp_config.LOG_ERROR           = true
 
 -- Set the default target server for your testing
-oimp.TARGET_SERVER = "http://www.example.com"
+oimp_config.TARGET_SERVER = "http://www.example.com"

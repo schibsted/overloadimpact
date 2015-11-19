@@ -57,11 +57,13 @@ An action can either be a flow of actions (e.g. a full login procedure) or a sin
 #### project_dir
 The project_dir holds your scenarios, custom lua libs, and suite configuration yml files. The yml files define scenarios, test_configs, programs, sequences and targets.
 
-To be able to write and run load impact tests you must first set up a project with the ```oimp setup_project``` command as explained below.
+To be able to write and run load impact tests you must first set up a project with the ```oimp setup_project``` command as explained below. Keep this dir in a git repo to share scenarios other test files in the team.
 
 #### project_run_data_dir
 
 This dir holds the record of executed test_config and the reports generated after the test_config runs. The project_run_data_dir is set up with ```oimp setup_project``` as explained below.
+
+In the project_run_data_dir we will find a ```reports``` and a ```runs``` directory. Only the ```runs``` directory needs to be added to git, because the reports take up a lot of space and can be recreated based on the data un ```runs```. We suggest maintaining project_run_data_dir in git to keep a record of executed runs. It is possible to keep the reports dir in Dropbox or somewhere similar to avoid having the whole team creating reports whenever they are needed.
 
 ## Usage
 
@@ -253,6 +255,20 @@ The default libs are always loaded. You can also add your own custom libs. An ex
 --- import foo/foo.lua"
 ```
 
+#### Scenario composition
+
+All scenarios are, when uploaded to loadimpact with the oimp command line tool, composed of the libraries to include, a scenario header, the scenario itself and a scenario footer. The header and footer handles metric setup and metrics success reporting. The composition is done in [code.py](overloadimpact/cli_tool/code.py).
+
+#### Lua configuration
+
+The default config settings can be found in [oimp_config](overloadimpact/lua/lib/common/oimp_config.lua). To override these settings, edit the your_oimp_project_dir/lua/config/suite_config.lua.
+
+The oimp_config.TARGET_SERVER must be set in order to handle redirect loops correctly:
+
+```
+oimp_config.TARGET_SERVER = "http://www.example.com"
+```
+
 ### Metrics
 
 OverloadImpact bases the statistics and charts gathered on data obtained through the LoadImpact API. Some of the data is default metrics, some of it is custom metrics created by oimp lib functions.
@@ -278,6 +294,7 @@ end
 A scenario which does not return will mark the test as successful in its generated footer functions. A scenario which does not call ```oimp.done()``` is not reporting its correctness rate.
 
 We will now explain some useful oimp functions found in the [oimp utilities lib](overloadimpact/lua/lib/common/oimp.lua).
+
 
 ##### Result check functions
 These are functions for evaluating values.

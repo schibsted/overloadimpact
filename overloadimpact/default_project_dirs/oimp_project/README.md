@@ -9,5 +9,5 @@ Loadimpact tests and suites for your project based on the overloadimpact framewo
 Open ```lua/config/suite_config.lua```:
 
 ```
-TARGET_SERVER = "http://www.example.com"
+oimp_config.TARGET_SERVER = "http://www.example.com"
 ```
