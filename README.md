@@ -2,6 +2,8 @@
 
 Command line tool and framework for writing and running tests suites for loadimpact.com, with support for custom lua libraries.
 
+The tool uses the LoadImpact [Python SDK](http://developers.loadimpact.com/sdk/index.html#li-docs-sdk-python) and [API](http://developers.loadimpact.com/api/).
+
 Overloadimpact can fire sets of test_configs, create reports and statistics, and reuse code between test scenarios.
 
 
@@ -26,36 +28,67 @@ export LOADIMPACT_API_TOKEN=YOUR_API_TOKEN_GOES_HERE
 
 Add to your shell profile file to avoid doing this all the time.
 
+## Concepts and terminology
+
+#### scenario
+The user scenario concept is defined by LoadImpact. It is a a file of lua code performing some user interaction.
+
+#### test_config
+The test_config concept is defined by LoadImpact and is a set of one or more scenarios to be executed together.
+
+#### program
+A program is a set of test_configs to be executed together. LoadImpact normally limits us to three simultaneous test_configs running. On running a program the test_configs will be reconfigured according scenarios listed under each config setting in the program.
+
+#### sequence
+A sequence is a sequence of programs to be executed one after another.
+
+#### report
+Reports are html reports with svg charts displaying the results of runs.
+
+#### target
+Targets are a set of load targets (requests/s goals) defined in
+
+#### action
+An action can either be a flow of actions (e.g. a full login procedure) or a single request (i.e. an API request). This concept is used to be able to measure how many actions the system can handle.
+
+#### project_dir
+The project_dir holds your scenarios, custom lua libs, and suite configuration yml files. The yml files define scenarios, test_configs, programs, sequences and targets.
+
+To be able to write and run load impact tests you must first set up a project with the ```oimp setup_project``` command as explained below.
+
+#### project_run_data_dir
+
+This dir holds the record of executed tests and the reports generated after the test runs. The project_run_data_dir is set up with ```oimp setup_project``` as explained below.
 
 ## Usage
 
-### Set up suite dirs
+### Set up project dirs
 
-The first time you run oimp you will need to set a suite dir. If you run oimp now you will get:
+The first time you run oimp you will need to set a project dir. If you run oimp now you will get:
 
 ```
 $ oimp
 Traceback (most recent call last):
-NameError: OIMP_SUITE dir not found. Set it as OIMP_SUITE_HOME env var, or execute from it's root dir. You can set up a new project with: oimp setup_project [name] [destination path].
+NameError: OIMP_PROJECT dir not found. Set it as OIMP_PROJECT_HOME env var, or execute from it's root dir. You can set up a new project with: oimp setup_project [name] [destination path].
 ```
 
-To create a suite, run oimp setup_project:
+To create a project, run oimp setup_project:
 
 ```
 $ oimp setup_project bar /tmp/foo
 OIMP_PROJECT dir not found. Set it as OIMP_PROJECT_HOME env var, or execute from it's root dir.
 You can set up a new project with: oimp setup_project [name] [destination path].
 
-Project home (/tmp/foo/bar_oimp_suite) and project run data home (/tmp/foo/bar_oimp_suite_run_data) successfully created.
+Project home (/tmp/foo/bar_oimp_project) and project run data home (/tmp/foo/bar_oimp_project_run_data) successfully created.
 
-Add OIMP_PROJECT_HOME=/tmp/foo/bar_oimp_suite and OIMP_PROJECT_RUN_DATA_HOME=/tmp/foo/bar_oimp_suite_run_data to your environment variables.
+Add OIMP_PROJECT_HOME=/tmp/foo/bar_oimp_project and OIMP_PROJECT_RUN_DATA_HOME=/tmp/foo/bar_oimp_project_run_data to your environment variables.
 ```
 
 We add the environment vars as instructed.
 
 ```
-$ export OIMP_PROJECT_HOME=/tmp/foo/bar_oimp_suite
-$ export OIMP_PROJECT_RUN_DATA_HOME=/tmp/foo/bar_oimp_suite_run_data
+$ export OIMP_PROJECT_HOME=/tmp/foo/bar_oimp_project
+$ export OIMP_PROJECT_RUN_DATA_HOME=/tmp/foo/bar_oimp_project_run_data
 ```
 
 To test that it is working, you can list the example programs created as part of the example project:
@@ -74,22 +107,130 @@ example-program-2
 
 ```
 
-Run `oimp` with no arguments to see all available commands.
+Run `oimp help` to see all available commands.
+
+<!--- start help -->
+```
+$ oimp help
+
+See git root README.md for more information.
+
+USAGE:
+  project:
+      oimp setup_project [NAME] [DEST_DIR]
+
+  scenario:
+      oimp scenario update [NAME]
+      oimp scenario validate [NAME]
+
+  test_config:
+      A test_config is a set of one or more scenarios to be executed together.
+
+      oimp test_config
+            List all defined test_configs defined in
+            your_oimp_project_dir/suite_config/scenarios.yaml
+      oimp test_config [NAME]
+            Execute test config [NAME]
+
+  program:
+      A program is a set of test_configs to be executed together. LoadImpact normally
+      limits us to three simultaneous test_configs running. On running a program the
+      test_configs will be reconfigured according scenarios listed under each config setting
+      in the program.
+
+      oimp program
+            List the names of all defined programs defined in
+            your_oimp_project_dir/suite_config/programs
+      oimp program [NAME] [RUN_DESCRIPTION]
+            Execute the program [NAME]
+            NAME - The name of the program definition file to be executed.
+            RUN_DESCRIPTION - Something like "20 web fronts, Redis DB". Mandatory
+            description of setup.
+
+  sequence:
+      A sequence is a sequence of programs to be executed one after another.
+
+      oimp sequence
+            List the names of all defined sequences defined in
+            your_oimp_project_dir/suite_config/sequences
+      oimp sequence [NAME] [RUN_DESCRIPTION]
+            Execute the sequence [NAME]
+            NAME - The name of the sequence definition file to be executed.
+            RUN_DESCRIPTION - Something like "20 web fronts, Redis DB". Mandatory
+            description of setup.
+
+  report:
+      Reports are html reports with svg charts displaying the results of runs.
+
+      oimp report program
+            List the PROGRAM_RUN_ID for all program executions.
+      oimp report program completed [PROGRAM_RUN_ID]
+            Create a report for a completed program run.
+      oimp report program running [PROGRAM_RUN_ID]
+            Create a dynamically updating report for a program run currently being
+            executed.
+      oimp report program combine [PROGRAM_RUN_ID,PROGRAM_RUN_ID,...]
+            Create a combined comparative report for a set of completed program runs.
+      oimp report test_config
+            List the RUN_ID for all test_config executions.
+      oimp report test_config completed [RUN_ID] [TITLE]
+            Create a report for a completed test_config run.
+            TITLE - optional title for report.
+      oimp report test_config running [RUN_ID] [TITLE]
+            Create a dynamically updating report for a test_config run currently being
+            executed.
+            TITLE - optional title for report.
+
+  targets:
+      Targets are a set of load targets (requests/s goals) defined in
+      your_oimp_project_dir/suite_config/targets.yml.
+      They are used in reports to compare actual numbers with what we aim at reaching.
+
+      oimp target
+            List targets
+
+  api_method:
+      api_method allows custom calls to the LoadImpact API endpoints.
+
+      oimp api_method [NAME] [ARGS ...]
+```
+<!--- end help -->
+
+## Writing scenarios
+
+When a project is set up with oimp setup_project, an example scenario called example-scenario-1.lua has been created.
+
+Example test example-scenario-1.lua:
+```
+local foo_res = foo.foo_request("bar")
+if oimp.fail(page, 'foo_request', foo_res, nil) then
+  oimp.done(0)
+  return
+end
+```
+
+It calls the function foo_request from the example ```foo``` lib found in lib/foo/foo.lua:
 
 ```
-$ oimp
-USAGE:
-      oimp setup_project        [NAME] [DEST_DIR]
-      oimp sequence         [NAME] [RUN_DESCRIPTION]
-      oimp program         [NAME] [RUN_DESCRIPTION]
-      oimp test_config        [NAME]
-      oimp scenario      [ ACTION] [NAME]
-      oimp report program  [ACTION] [PROGRAM_RUN_ID]
-      oimp report test_config [ACTION] [RUN_ID] [TITLE]
-      oimp target
-      oimp api_method        [NAME] [ARGS ...]
-      oimp help
+foo = {}
+foo.some_var = "bar"
+
+function foo.some_request(foo_param)
+  local page = "foo_index"
+  local users_ds  = datastore.open('users-DS_VERSION') -- get a versioned users DS
+  user = users_ds:get_random()
+  return oimp.request(page, {
+                        'GET',
+                        "http://www.examplefoo.com/index.html?user_email=" .. url.escape(user[1]) .. "&foo=" .. url.escape(foo_param)
+  },
+                      true -- is_core_action = true, mark this request as the core action to be counted for this scenario
+  )
+end
 ```
+
+### Core action count
+
+Some scenarios will iterate over some action multiple times. An example is an API endpoint test which first obtains a an API token, an then uses this token 100 times to hit the endpoint. In this case we must mark this request to be counted, in order to get a total count of actions performed.
 
 ## TODO / Future Ideas
 

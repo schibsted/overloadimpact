@@ -102,79 +102,20 @@ def main():
         command.api_methodcmd(args['NAME'], args['ARGS'])
 
     elif args['help']:
-        helpstr = """
-See git root README.md for more information.
-
-USAGE:
-  project:
-      oimp setup_project [NAME] [DEST_DIR]
-
-  scenario:
-      oimp scenario update [NAME]
-      oimp scenario validate [NAME]
-
-  test_config:
-      A test_config is a set of one or more scenarios to be executed together.
-
-      oimp test_config
-            List all defined test_configs defined in your_oimp_suite_dir/suite_config/scenarios.yaml
-      oimp test_config [NAME]
-            Execute test config [NAME]
-
-  program:
-      A program is a set of test_configs to be executed together. LoadImpact normally limits us to three
-      simultaneous test_configs running. On running a program the test_configs will be reconfigured according
-      scenarios listed under each config setting in the program.
-
-      oimp program
-            List the names of all defined programs defined in your_oimp_suite_dir/suite_config/programs
-      oimp program [NAME] [RUN_DESCRIPTION]
-            Execute the program [NAME]
-            NAME - The name of the program definition file to be executed.
-            RUN_DESCRIPTION - Something like "20 web fronts, Redis DB". Mandatory description of setup.
-
-  sequence:
-      A sequence is a sequence of programs to be executed one after another.
-
-      oimp sequence
-            List the names of all defined sequences defined in your_oimp_suite_dir/suite_config/sequences
-      oimp sequence [NAME] [RUN_DESCRIPTION]
-            Execute the sequence [NAME]
-            NAME - The name of the sequence definition file to be executed.
-            RUN_DESCRIPTION - Something like "20 web fronts, Redis DB". Mandatory description of setup.
-
-  report:
-      Reports are html reports with svg charts displaying the results of runs.
-
-      oimp report program
-            List the PROGRAM_RUN_ID for all program executions.
-      oimp report program completed [PROGRAM_RUN_ID]
-            Create a report for a completed program run.
-      oimp report program running [PROGRAM_RUN_ID]
-            Create a dynamically updating report for a program run currently being executed.
-      oimp report program combine [PROGRAM_RUN_ID,PROGRAM_RUN_ID,...]
-            Create a combined comparative report for a set of completed program runs.
-      oimp report test_config
-            List the RUN_ID for all test_config executions.
-      oimp report test_config completed [RUN_ID] [TITLE]
-            Create a report for a completed test_config run.
-            TITLE - optional title for report.
-      oimp report test_config running [RUN_ID] [TITLE]
-            Create a dynamically updating report for a test_config run currently being executed.
-            TITLE - optional title for report.
-
-  targets:
-      Targets are a set of load targets (requests/s goals) defined in your_oimp_suite_dir/suite_config/targets.yml.
-      They are used in reports to compare actual numbers with what we aim at reaching.
-
-      oimp target
-            List targets
-
-  api_method:
-      api_method allows custom calls to the LoadImpact API endpoints.
-
-      oimp api_method [NAME] [ARGS ...]
-"""
+        helpstr = __get_help_str()
         print helpstr
     else:
         exit('This is not the command you are looking for.')
+
+def __get_help_str():
+    """Parse help comment from README.md
+    """
+    md_path = os.path.dirname(os.path.abspath(__file__)) + "/../README.md"
+    content = None
+    with open(md_path, 'r') as md_file:
+        content = md_file.read()
+    start_sentinel = "<!--- start help -->\n```\n"
+    end_sentinel = "```\n<!--- end help -->"
+    start_pos = content.find(start_sentinel)
+    end_pos = content.find(end_sentinel)
+    return content[start_pos+len(start_sentinel):end_pos]

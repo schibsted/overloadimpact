@@ -8,5 +8,7 @@ function foo.some_request(foo_param)
   return oimp.request(page, {
                         'GET',
                         "http://www.examplefoo.com/index.html?user_email=" .. url.escape(user[1]) .. "&foo=" .. url.escape(foo_param)
-  })
+  },
+                      true -- is_core_action = true, signals that this the core action of this scenario
+  )
 end
