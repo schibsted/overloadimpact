@@ -110,8 +110,8 @@ def __configure_tracks(test_config, scenario_params):
 
     for scenario_name in scenario_params:
         total_percent = scenario_params[scenario_name]['percent-of-users']
-        if 'multi_regions' in scenario_params[scenario_name]:
-            region_percents = __distribute_percents(total_percent, ('use_alternative_regions' in scenario_params[scenario_name]))
+        if 'multi-regions' in scenario_params[scenario_name]:
+            region_percents = __distribute_percents(total_percent, ('use-alternative-regions' in scenario_params[scenario_name]))
         else:
             if 'region' in scenario_params[scenario_name]:
                 region_percents = {scenario_params[scenario_name]['region']: total_percent}

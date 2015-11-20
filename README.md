@@ -248,7 +248,7 @@ OverloadImpact provide some general utility libs.
 
 #### Lib loading
 
-The default libs are always loaded. You can also add your own custom libs. An example is the foo lib created in your_oimp_project_dir/lua/lib/foo/foo.lua. It is loaded since it is included in your_oimp_project_dir/lua/lib/includes.lua:
+The default libs are always loaded. You can also add your own custom libs. An example is the foo lib created in ```your_oimp_project_dir/lua/lib/foo/foo.lua```. It is loaded since it is included in ```your_oimp_project_dir/lua/lib/includes.lua```:
 
 ```
 -- Add your includes here. "foo" is a subdir in in this dir.
@@ -261,7 +261,7 @@ All scenarios are, when uploaded to loadimpact with the oimp command line tool, 
 
 #### Lua configuration
 
-The default config settings can be found in [oimp_config](overloadimpact/lua/lib/common/oimp_config.lua). To override these settings, edit the your_oimp_project_dir/lua/config/suite_config.lua.
+The default config settings can be found in [oimp_config](overloadimpact/lua/lib/common/oimp_config.lua). To override these settings, edit the ```your_oimp_project_dir/lua/config/suite_config.lua```.
 
 The oimp_config.TARGET_SERVER must be set in order to handle redirect loops correctly:
 
@@ -347,13 +347,97 @@ An example:
 url = oimp.profile(url, page)
 ```
 
+## Uploading and running scenarios on LoadImpact
+
+### Uploading a scenario
+
+To be able to upload a scenario to loadimpact.com you must first create a scenario manually on that web site and get its ID (the number in the url). Add the scenario id to ```your_oimp_project_dir/suite_config/scenarios.yml```:
+
+```
+scenarios:
+  foo-scenario:
+    id: 3071351
+```
+
+The name does not have to match the name of the scenario on loadimpact.com, but for clarity it is good to use the same name.
+
+### Adding a test_config
+
+You must create a test_config on loadimpact.com to be able to execute one or more scenarios massively. The name of the test_config does not have to match the name in your suite_config, but out of convenience name it without spaces. Let's call it "mixed-api-traffic". Then add it, together with the id from the URL, to ```your_oimp_project_dir/suite_config/configs.yml```:
+
+```
+configs:
+  mixed-api-traffic:
+    id: 3012689
+```
+
+#### Configuring the test_config
+
+The test_config can either be configured using the loadimpact.com web interface or by an oimp program. We will explain programs below. Note that programs will overwrite settings done on the web.
+
+### Creating a program
+
+A program is a set of test_configs to be executed together. LoadImpact normally limits us to three simultaneous test_configs running. On running a program the test_configs will be reconfigured according scenarios listed under each config setting in the program.
+
+Unlike test_configs and scenarios, the program does exist as a loadimpact concept, only as an overloadimpact concept. So there is no need to create a program on loadimpact.com to match the program defined locally in ```your_oimp_project_dir/suite_config/programs```.
+
+In the example project we will look at the program ```suite_config/programs/example-program-1.yaml```:
+
+```
+---
+configs:
+  example-config-1:
+    users: 1000
+    warmup: 10
+    stable: 5
+    scenarios:
+      example-scenario-1:
+        percent-of-users: 100
+  example-config-2:
+    users: 1000
+    warmup: 10
+    stable: 5
+    scenarios:
+      example-scenario-2:
+        percent-of-users: 70
+      example-scenario-3:
+        percent-of-users: 30
+```
+
+The filename, excluding the extension, is the name of the program e.g. "example-program-1". This name will be used to execute it and generate execution names.
+
+#### Programs reconfiguring test_configs
+
+The program will reconfigure the configs example-config-1 and example-config-2, overwriting existing settings. The config names must correspond to entries in ```your_oimp_project_dir/suite_config/configs.yml```.
+
+Program fields explained:
+
+* test_config parameters
+  * ```users``` - the amount of VUs (virtual users) to be used for this test_config. Your total VU limit (e.g. 5000) has to be divided between your test_configs.
+  * ```warmup``` - Time in minutes for the build up from 0 to ```users``` amount of users. The amount needed depends both on how much VUs you need to get into action and how long time your platform needs for scaling up. For a 1000 users 10m warmp may be sufficient. Note that if you have multiple test_configs to be executed simultaneously you should give them the same warmup and stable parameters to be run at the same time.
+  * ```stable``` - Time in minutes for the stable period. One strategy is to have stable be half of the warmup time.
+* scenario parameters
+  * ```percent-of-users``` - The amount of the ```users``` to be used on this specific scenario. You must ensure they manually sum up to 100. Otherwise the API will throw an error.
+  * ```source-ip-multiplier``` - To improve throughput it may help to spread out tests across IPs. To achieve it we use the ```source-ip-multiplier``` param which can be set from 1-6 representing 1x - 6x multipliers. If it is not set, 1x is assumed. Internally in oimp, there are some peculiar details here. Skip this if you are not interested :). The current implementation of the loadimpact.com API does not have clear implementation of what multiplier param values are excepted to represent each multiplier. LoadImpact's own explanation does not correspond with how it is calculated in practice: *"Start with the number of VU you want to run in your test, say 1501 and multiply with your factor, say 5 X. That's a sum of 7505. Divide by 500 and you have 15.01. You can' have .01 load generators so it will become 16. Always adjusted upwards when not divisible as a whole by 500."* So to work around it, we start with the suggested 0-5 values multiplied by 500s, and then increment by one until the value is accepted by the SDK ```test_config.update()```.
+  * ```region``` - We have only managed to use amazon regions, even if some rackspace regions are listed by the API. The default region for oimp is "amazon:ie:dublin". Some example regions are "amazon:us:ashburn", "amazon:us:portland", "amazon:ie:dublin" and "amazon:us:palo alto". In order to work around loadimpact.com system failures and undocumented suspected request limiting we had to run some test from other regions than "amazon:ie:dublin". Also, by spreading scenarios across regions we can force more IPs, and in that way improve request volume.
+  * ```multi-regions``` - Automatically spread the traffic for a scenario across Dublin, Ashburn, Portland and Palo Alto.
+  * ```use-alternative-regions``` - If ```true```, use Singapore, Sydney, Tokyo instead of the the Western ones. This is a hack to work around system failures in loadimpact.com.
+
+You can see the region and ip multiplier params used in the [example-program-3](overloadimpact/default_project_dirs/oimp_project/suite_config/programs/example-program-3.yaml).
+
+
 ## TODO / Future Ideas
 
 * Improve our inexpert lua and python code.
 * All python command failures and exits should have a sensible error message.
 * Enable local running of scenarios. Does not seem too complicated as all request calls are already wrapped in oimp.request(). For local running we could use the luasocket http library (<http://w3.impa.br/~diego/software/luasocket/http.html>) instead, which might be what is actually used by LoadImpact because the function calls are very similar.
+* Add tests for the code in this repo?
 
 ## Troubleshooting
+
+There used to be a couple of bugs in the loadimpact sdk which are currently (20151120) fixed in the [develop branch](https://github.com/loadimpact/loadimpact-sdk-python/).
+
+Here are the bugs:
 
 I debugged a 415 problem I got on update requests from the loadimpact python
 API. It's caused by a missing `Content-Type` header. Fixed it by adjusting the
@@ -370,3 +454,5 @@ to:
 def put(self, path, headers={"Content-Type": "application/json"},
 params=None, data=None, file_object=None):
 ```
+
+Another bug in obtaining custom metrics was fixed by this [commit](https://github.com/loadimpact/loadimpact-sdk-python/commit/dcd60cf5f23d64876b181bb023dbe073a56210ed]).
