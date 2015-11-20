@@ -35,7 +35,7 @@ from .exceptions import (
     MissingApiTokenError, NotFoundError, RateLimitError, ServerError,
     TimeoutError, UnauthorizedError)
 from .resources import (
-    DataStore, Test, TestConfig, UserScenario, UserScenarioValidation, TestResult)
+    DataStore, Test, TestConfig, UserScenario, UserScenarioValidation)
 
 try:
     from urlparse import urljoin

@@ -73,8 +73,8 @@ def program_reportcmd(action, program_run_id):
     elif action == "combine":
         combined_programs_report.generate(program_run_id.split(','))
     else:
-        print("Generate the report with: oimp report program [running/completed/combine] [program_run_name(s)]")
         program_report.list_runs()
+        print("Generate the report with: oimp report program [running/completed/combine] [program_run_name(s)]")
 
 def test_config_reportcmd(action, run_id, title):
     if not paths.suite_defined(): return # cannot run without project env defined
@@ -84,8 +84,8 @@ def test_config_reportcmd(action, run_id, title):
     if action == "completed":
         config_report.generate_for_completed_by_id(run_id, title)
     else:
-        print("Generate the report with: oimp report config [running/completed] [program_run_name]")
         config_report.list_runs()
+        print("Generate the report with: oimp report config [running/completed] [program_run_name]")
 
 def api_methodcmd(name, args):
     if not paths.suite_defined(): return # cannot run without project env defined

@@ -5,10 +5,12 @@ cookies.MANUAL_HANDLING = false
 
 cookies.capture_keys = {}
 
+-- Add a cookie array key to watch out for when harvesting cookie values from request results
 function cookies.add_capture_key(key)
   table.insert(cookies.capture_keys, key)
 end
 
+-- Set the cookies to their initial values
 function cookies.init(response)
   cookies.global_cookies = response.cookies
 end
@@ -19,18 +21,25 @@ function cookies.enable_manual_cookies(enable)
   http.set_option("auto_cookie_handling", not enable)
 end
 
+function cookies.manual_handling_enabled()
+  return cookies.MANUAL_HANDLING
+end
+
+-- Encode a cookie table as strings
 function cookies.encode(cookies)
   str = ""
-  for key,value in pairs(cookies) do --pseudocode
+  for key,value in pairs(cookies) do
     str = str .. key .. "=" .. value .. ";"
   end
   return str
 end
 
+-- Set a value in the manually handled global_cookies table
 function cookies.set(key, val)
   cookies.global_cookies[key] = val
 end
 
+-- Update global cookies from a request result
 function cookies.update(res)
   for i, key in ipairs(cookies.capture_keys) do
     -- Overwrite session cookie with new value after login
@@ -40,6 +49,7 @@ function cookies.update(res)
   end
 end
 
+-- Do a manual redirect loop, capturing cookies manually along the way.
 function cookies.capture_redirect(page, start_res, capture_key, destination_regex)
   if cookies.MANUAL_HANDLING then
     local status_code = start_res.status_code
@@ -80,6 +90,7 @@ function cookies.capture_redirect(page, start_res, capture_key, destination_rege
   return {["response"] = current_res, ["location"] = next_location}
 end
 
+-- Get request headers including global_cookies
 function cookies.cookie_headers()
   if cookies.global_cookies then
     logger.debug("headers global_cookies:" .. json.stringify(cookies.global_cookies))
@@ -95,15 +106,13 @@ function cookies.cookie_headers()
   return headers
 end
 
-
+-- Get the global_cookies
 function cookies.get_global()
   return cookies.global_cookies
 end
 
-function cookies.manual_handling_enabled()
-  return cookies.MANUAL_HANDLING
-end
 
+-- Get the global_cookies encoded to a str
 function cookies.encoded_global()
   return cookies.encode(cookies.get_global())
 end

@@ -5,7 +5,7 @@ import liclient
 
 data_store_version_prefix = ".VER_"
 
-
+# Upload a new datastore version, and update it for all scenarios
 def update_for_scenarios(data_store_name,  scenarios, additional_data_stores):
     time_str = time.strftime("%Y%m%d%H%M%S", time.gmtime())
     global data_store_version_prefix

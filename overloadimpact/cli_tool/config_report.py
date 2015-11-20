@@ -323,7 +323,7 @@ def __get_metric(key, metrics, divisor):
 def __round(float_num):
     return int(round(float_num/10, 1) * 10)
 
-# This function will try to get the period from 70% to 90% of the test time, assuming
+# This function will try to get the period from 70% to 90% of the stable period, assuming
 # that this will give us a sensible average from the max Virtual Users load period.
 def __find_sample_period(metrics):
     clients_active = metrics[CLIENTS_ACTIVE_KEY]

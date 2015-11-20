@@ -14,6 +14,8 @@ function redirect.prepare_url(page, location)
   return uri
 end
 
+-- Utility function for doing a redirect with robust handling of partial location urls e.g.
+-- "/somepage.html" instead of "http://www.example.com/somepage.html".
 function redirect.request(page, location, auto_redirect)
   if oimp.fail(page, 'redirect_request.location', location) then
     return

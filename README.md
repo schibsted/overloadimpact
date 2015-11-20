@@ -17,6 +17,8 @@ If you clone from git, you can install the pip module locally by running:
 pip install -e /path/to/overloadimpact
 ```
 
+If for some reason the requirements (loadimpact, tabulate, pygal) are not installed, install them by doing ```pip install -r requirements.txt```.
+
 ### API token environment variable
 
 Before you can run the loadimpact client you also need to set the API token
@@ -49,7 +51,7 @@ A sequence is a sequence of programs to be executed one after another.
 Reports are html reports with svg charts displaying the results of runs.
 
 #### target
-Targets are a set of load targets (requests/s goals) defined in
+Targets are a set of load targets (requests/s goals) defined in suite_config/targets.yaml.
 
 #### action
 An action can either be a flow of actions (e.g. a full login procedure) or a single request (i.e. an API request). This concept is used to be able to measure how many actions the system can handle.
@@ -347,6 +349,18 @@ An example:
 url = oimp.profile(url, page)
 ```
 
+#### Versioned data stores
+
+Using frequently updated data stores can be cumbersome on loadimpact.com because you have to manually change the data stores assigned to the scenario each time. To allow versioned data stores, use the suffix naming convention ```-DS_VERSION```, e.g.:
+
+```local users_ds  = datastore.open('users-DS_VERSION') -- get a versioned users DS```
+
+When the scenario is uploaded with ```oimp scenario update [scenario-name]```, oimp automatically looks up all data stores containing ```.VER_``` and selects the newest one. An example data store name could be ```example.com-users.VER_20150731100338```.
+
+The data store handling is done in [datastore.py](overloadimpact/cli_tool/datastory.py). There is a command ```update_for_scenarios()``` to upload a new datastore version, and update it for all scenarios. It is currently not connected to an oimp command, but it would be easy to connect it. It should be working, and was previously executed by a custom script from the command line.
+
+Alternatively, you can manually upload a data store, but make sure the date time part of the data store name has the correct format ```.VER_%Y%m%d%H%M%S```.
+
 ## Uploading and running scenarios on LoadImpact
 
 ### Uploading a scenario
@@ -425,6 +439,78 @@ Program fields explained:
 
 You can see the region and ip multiplier params used in the [example-program-3](overloadimpact/default_project_dirs/oimp_project/suite_config/programs/example-program-3.yaml).
 
+### Adding a sequence
+
+This construct is often not used, as programs will fill most needs.  Sequences can be used if you want to run programs sequentially for example for scaling up in a specific way, using a specific program for scaling. An example sequence is provided: [example-sequence](overloadimpact/default_project_dirs/oimp_project/suite_config/sequences/example-sequence.yaml).
+
+### Adding a target
+
+Currently we only support targets for ```actions-per-sec```.  An example targets.yaml entry:
+
+```
+targets:
+  europe:
+    example-scenario-1:
+      actions-per-sec: 3500
+```
+
+The targets are used when generating combined reports.
+
+## Reports
+
+See the ```oimp help``` section above on how to create reports. Currently the reports create a number of different graphs. Both for each scenario, and for the whole test_config. After running the report, the path to the report overview html file is printed, so it can be opened in a browser.
+
+Graph explanations:
+
+* ```peak period``` - The peak period is the period from 70% to 90% of the stable time, after scaling has finished, assuming that this will give us a sensible average from the max Virtual Users load period.
+*```VUs/virtual users/users```` - This is metric appearing in most graphs showing how many virtual users are currently used. In the case of percentage distribution of VUs among scenarios, the precise number of VUs for one scenario is calculated, and therefore not 100% precise.
+* ```peak period average actions/s``` - The average actions/s for the peak period.
+* ```avg actions per sec``` - The average actions per sec through the whole test period.
+* ```avg peak traffic actions per sec``` - The average actions per sec during the peak period.
+* ```avg total duration``` - The average total duration of the whole scenario run. In the case of multiple actions per scenario, this will differ from the avg core action duration.
+* ```avg core action duration``` - The duration of a single core action. In the case of multiple actions per scenario, this will differ from the avg total duration. The core action count depends on a correct implementation of the scenario, as the graph depends on custom oimp metrics.
+* ```avg correctness``` - The sucess/correctness rate of a scenario. 1 = 100% = total success. This graph depends on a correct implementation of the scenario, as the graph depends on custom oimp metrics.
+
+There are some general graphs for test_configs as a whole also, but they are normally less useful.
+
+### Combined reports
+
+The combined reports allow us to compare results from several program runs, and if targets are specified, the results from the program runs are included into the comparison.
+
+### Runtime reports
+
+The implementation of runtime reporting has not received a lot time investment, but it might still work. Be prepared for bugs. The runtime reports can be triggered both for a program (a set of test_configs) and a single test_config. For each config_run a runtime_report.html will be created and its path printed to the command line. Open this file in a browser. A javascript snippet will try to reload the report every now and then. 
+
+## Manual cookie and redirect handling
+
+### Manual redirect handling
+
+To prevent a sequence of redirects from being executed on a request, call the request with ```auto_redirect = false```. E.g.:
+
+```
+  return oimp.request(page,
+                      {
+                        'GET',
+                        url,
+                      },
+                      auto_redirect = false
+  )
+```
+
+If you do not want to put load on the final step of your redirect (i.e. if you redirect to some landing page after a login), you can instead just test that the final step of redirect chain asks for hitting the final url. 
+
+In the [redirect](overloadimpact/lua/lib/common/redirect.lua) there is a utility function ```redirect.request()``` for doing a redirect with robust handling of partial location urls e.g. ```/somepage.html``` instead of ```http://www.example.com/somepage.html```. It depends on ```oimp_config.TARGET_SERVER``` being correctly set to the URL of the server you are load testing.
+
+
+### Manual cookie handling
+
+When testing session cookie and rememberme cookie variations it may be necessary to handle cookies manually. This is possible but sometimes cumbersome with the lua native functions. You can not combine automatic redirects with manual cookie handling.
+
+In the [cookies](overloadimpact/lua/lib/common/cookies.lua) lib there are some utility functions for handling cookies.
+
+To enable manual cookie handling call ```cookies.enable_manual_cookies(true)``` at the beginning of your scenario test. The documentation of the cookies utility functions and the functions themselves are a work in progress. See the code for more details.
+
+```cookies.capture_redirect()``` is a cryptic function which does a manual redirect loop, capturing cookies manually along the way.
 
 ## TODO / Future Ideas
 
