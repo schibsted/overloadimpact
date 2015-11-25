@@ -236,5 +236,5 @@ function oimp.debug(msg)
 end
 
 function oimp.info(msg)
-  logger.debug(msg)
+  logger.info(msg)
 end
