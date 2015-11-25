@@ -163,7 +163,11 @@ def __save_validation_results(validation, results):
     os.chmod(pretty_save, st.st_mode | stat.S_IEXEC)
     print("Pretty print results with %s" % (pretty_save))
 
-def validate(user_scenario):
+def validate(name, id):
+    user_scenario = liclient.client.get_user_scenario(id)
+    __validate(user_scenario)
+
+def __validate(user_scenario):
     validation = user_scenario.validate()
     print("Starting validation #%d..." % (validation.id,))
     while True:
@@ -189,5 +193,5 @@ def update(id, name):
     user_scenario.data_stores = new_data_stores
     user_scenario.update()
     print '    Updated test scenario %i' % (id)
-    validate(user_scenario)
+    __validate(user_scenario)
     print '    Validated test scenario %i' % (id)

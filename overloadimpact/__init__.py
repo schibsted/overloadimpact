@@ -93,7 +93,7 @@ def main():
         if args['ACTION']:
             command.scenariocmd(args['ACTION'], args['NAME'])
         else:
-            exit('You must specify an action and a scenario name. Use oimp scenario validate [name] or oimp scenario update [name].')
+            exit('You must specify an action and a scenario name. Use oimp scenario validate [name] or oimp scenario update [name]. List scenarios with oimp scenario validate.')
 
     elif args['target']:
         command.targetcmd()

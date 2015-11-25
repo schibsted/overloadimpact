@@ -27,9 +27,11 @@ def programcmd(name, run_description):
 def scenariocmd(action, name):
     if not paths.suite_defined(): return # cannot run without project env defined
     import scenario
+    import code
     if action == "validate":
         if name:
-            scenario.validate(name)
+            scenario_cfg = scenario.get(name)
+            code.validate(name, scenario_cfg['id'])
         else:
             scenario.show_scenarios()
     elif action == "update":
