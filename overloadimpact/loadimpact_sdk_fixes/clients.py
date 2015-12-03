@@ -15,8 +15,10 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-
 from __future__ import absolute_import
+import os
+import platform
+import requests
 
 __all__ = ['ApiTokenClient']
 
@@ -24,10 +26,6 @@ try:
     import httplib
 except ImportError:
     from http import client as httplib
-
-import os
-import platform
-import requests
 
 from .exceptions import (
     ApiError, BadRequestError, ConflictError, ConnectionError, ClientError,
@@ -193,7 +191,7 @@ class Client(object):
         return self._check_response(response)
 
     @requests_exceptions_handling
-    def put(self, path,  headers={"Content-Type": "application/json"}, params=None, data=None, file_object=None):
+    def put(self, path, headers=None, params=None, data=None, file_object=None):
         """Make a PUT request to the API.
 
         Args:
@@ -212,6 +210,8 @@ class Client(object):
             ForbiddenError: Permission denied.
             APIError: Generic error from requests library.
         """
+        if not headers:
+            headers = {"Content-Type": "application/json"}
         url = urljoin(self.__class__.api_base_url, path)
         files = {'file': file_object} if file_object else None
         response = self._request('put', url, headers=headers, params=params,
@@ -221,7 +221,7 @@ class Client(object):
     def _check_response(self, response):
         status_code = response.status_code
 
-        if 399 < status_code and 600 > status_code:
+        if 399 < status_code < 600:
             try:
                 error = response.json()
                 msg = "%s (%s)" % (error['message'], response.url)
@@ -253,7 +253,8 @@ class Client(object):
         kwargs = self._prepare_requests_kwargs(kwargs)
         return self._requests_request(method, *args, **kwargs)
 
-    def _requests_request(self, method, *args, **kwargs):
+    @staticmethod
+    def _requests_request(method, *args, **kwargs):
         return getattr(requests, method)(*args, **kwargs)
 
 
@@ -274,7 +275,8 @@ class ApiTokenClient(Client):
                                            "LOADIMPACT_API_TOKEN.")
         self.api_token = api_token
 
-    def _get_api_token_from_environment(self):
+    @staticmethod
+    def _get_api_token_from_environment():
         return os.environ['LOADIMPACT_API_TOKEN']
 
     def _prepare_requests_kwargs(self, kwargs):

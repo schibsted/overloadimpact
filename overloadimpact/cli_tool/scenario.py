@@ -4,6 +4,7 @@ import yaml
 import paths
 import code
 
+
 def update(name):
     scenarios = get_scenarios()
 
@@ -31,6 +32,7 @@ def get(name):
     with open(paths.SCENARIOS_FILE) as f:
         return yaml.load(f)['scenarios'][name]
 
+
 def show_scenarios():
     cols = ['SCENARIO', 'ID']
     rows = []
@@ -43,6 +45,7 @@ def show_scenarios():
         ])
 
     print tabulate.tabulate(rows, headers=cols)
+
 
 def get_scenarios():
     with open(paths.SCENARIOS_FILE) as f:

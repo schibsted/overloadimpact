@@ -1,6 +1,7 @@
 import sys
 import time
 
+
 def easysleep(seconds):
     size = 60
     count = 0

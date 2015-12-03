@@ -1,5 +1,6 @@
 import os
 
+
 def setup(name, dest_dir):
     if not os.path.isdir(dest_dir):
         print("Please supply a valid destination dir")
@@ -11,6 +12,8 @@ def setup(name, dest_dir):
     os.system("cp -rf %s/oimp_project %s" % (defaults_base_path, project_dir))
     os.system("cp -rf %s/oimp_project_run_data %s" % (defaults_base_path, project_run_data_dir))
     print("")
-    print("Project home (%s) and project run data home (%s) successfully created." % (project_dir, project_run_data_dir))
+    print("Project home (%s) and project run data home (%s) successfully created." % (
+              project_dir, project_run_data_dir))
     print("")
-    print("Add OIMP_PROJECT_HOME=%s and OIMP_PROJECT_RUN_DATA_HOME=%s to your environment variables." % (project_dir, project_run_data_dir))
+    print("Add OIMP_PROJECT_HOME=%s and OIMP_PROJECT_RUN_DATA_HOME=%s to your environment variables." % (
+        project_dir, project_run_data_dir))

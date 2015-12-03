@@ -5,15 +5,16 @@ import liclient
 
 data_store_version_prefix = ".VER_"
 
+
 # Upload a new datastore version, and update it for all scenarios
-def update_for_scenarios(data_store_name,  scenarios, additional_data_stores):
+def update_for_scenarios(data_store_name, scenarios, additional_data_stores):
     time_str = time.strftime("%Y%m%d%H%M%S", time.gmtime())
     global data_store_version_prefix
     version_name = data_store_name + data_store_version_prefix + time_str
     print version_name
 
     file_obj = open('../lua/datastores/' + data_store_name + '.csv', 'r')
-    data_store = liclient.client.create_data_store({ # for unknown reasons this returns 500 error
+    data_store = liclient.client.create_data_store({  # for unknown reasons this returns 500 error
         'name': version_name,
         'from_line': '1',
         'separator': 'comma',
@@ -36,21 +37,24 @@ def update_for_scenarios(data_store_name,  scenarios, additional_data_stores):
         user_scenario.update()
         print "Updated scenario " + repr(scenario_id)
 
+
 def get_last_data_store_versions():
     data_stores = liclient.client.list_data_stores()
     versioned_data_stores = {}
     # lookup latest version of that datastore
     for data_store in data_stores:
         prefix_pos = data_store.name.find(data_store_version_prefix)
-        if prefix_pos < 1: continue
+        if prefix_pos < 1:
+            continue
         base_name = data_store.name[:prefix_pos]
         # first version of this data_store found e.g. "foo.VER_201504505123", save with key "foo"/base_name
-        if not base_name in versioned_data_stores:
+        if base_name not in versioned_data_stores:
             versioned_data_stores[base_name] = data_store
         else:
             # overwrite if current entry is newer
             if versioned_data_stores[base_name].updated < data_store.updated:
-                versioned_data_stores[base_name] < data_store
+                # TODO - changed due to error "statement seems to have no effect". Is this change correct?
+                versioned_data_stores[base_name] = data_store
 
     # simplify result
     last_data_store_versions = {}

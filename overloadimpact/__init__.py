@@ -13,6 +13,9 @@ generation, also across test suite runs.
 :license: MIT, see LICENSE for more details.
 
 """
+import os
+import sys
+import docopt
 
 __title__ = 'requests'
 __version__ = '0.0.4'
@@ -21,10 +24,6 @@ __author__ = 'Pål de Vibe, Pedro Barbosa'
 __license__ = 'MIT'
 __copyright__ = 'Copyright 2015 Schibsted Products and Technology'
 
-import os
-import sys
-
-import docopt
 
 def main():
     BASE_DIR = os.path.abspath(__file__) + "/cli_tool"
@@ -47,13 +46,12 @@ def main():
       oimp api_method        [NAME] [ARGS ...]
       oimp help
     """
-
+    args = {}
     try:
         args = docopt.docopt(desc)
     except Exception, e:
         print(e)
         exit(1)
-
 
     # elif args['show']:
     #   source = args['<source>']
@@ -93,7 +91,8 @@ def main():
         if args['ACTION']:
             command.scenariocmd(args['ACTION'], args['NAME'])
         else:
-            exit('You must specify an action and a scenario name. Use oimp scenario validate [name] or oimp scenario update [name]. List scenarios with oimp scenario validate.')
+            exit('You must specify an action and a scenario name. Use oimp scenario validate [name] or oimp scenario'
+                 ' update [name]. List scenarios with oimp scenario validate.')
 
     elif args['target']:
         command.targetcmd()
@@ -107,6 +106,7 @@ def main():
     else:
         exit('This is not the command you are looking for.')
 
+
 def __get_help_str():
     """Parse help comment from README.md
     """
@@ -118,4 +118,4 @@ def __get_help_str():
     end_sentinel = "```\n<!--- end help -->"
     start_pos = content.find(start_sentinel)
     end_pos = content.find(end_sentinel)
-    return content[start_pos+len(start_sentinel):end_pos]
+    return content[start_pos + len(start_sentinel):end_pos]

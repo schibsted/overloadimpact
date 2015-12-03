@@ -3,9 +3,11 @@ import tabulate
 import yaml
 import paths
 
+
 def get(name):
     with open(paths.TARGETS_FILE) as f:
         return yaml.load(f)['targets'][name]
+
 
 def show_targets():
     cols = ['TARGET', 'SCENARIO', 'ACTIONS-PER-SEC']
@@ -22,6 +24,7 @@ def show_targets():
             ])
 
     print tabulate.tabulate(rows, headers=cols)
+
 
 def get_targets():
     with open(paths.TARGETS_FILE) as f:

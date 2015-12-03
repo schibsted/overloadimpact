@@ -7,35 +7,42 @@ import scenario
 import math
 import loadimpact
 
+
 def get(name):
-    with open(paths.PROGRAMS_PATH % (name)) as f:
+    with open(paths.PROGRAMS_PATH % name) as f:
         return yaml.load(f)['configs']
 
-def start(id):
-    test_config = liclient.client.get_test_config(id)
+
+def start(config_id):
+    test_config = liclient.client.get_test_config(config_id)
     run_id = test_config.start_test()
-    print('==> Started test %s' % (test_config.name))
+    print('==> Started test %s' % test_config.name)
     # config_report.generate_for_running(run_id, title)
     return run_id
+
 
 def get_configs():
     with open(paths.CONFIGS_FILE) as f:
         return yaml.load(f)['configs']
 
-def configure(id, users, warmup, stable=0, scenarios=None, source_ip_multiplier=None):
+
+def configure(config_id, users, warmup, stable=0, scenarios=None, source_ip_multiplier=None):
     steps = [{'users': users, 'duration': warmup}]
 
     if stable:
         steps.append({'users': users, 'duration': stable, })
 
-    test_config = liclient.client.get_test_config(id)
+    test_config = liclient.client.get_test_config(config_id)
     test_config.url = 'dummy'
     test_config.config['load_schedule'] = steps
     if scenarios:
         test_config.config[u'tracks'] = __configure_tracks(test_config, scenarios)
     # specify source ips
 
-    # LoadImpact's own explanation: it's not calculated as expected. Start with the number of VU you want to run in your test, say 1501 and multiply with your factor, say 5 X. That's a sum of 7505. Divide by 500 and you have 15.01. You can' have .01 load generators so it will become 16. Always adjusted upwards when not divisible as a whole by 500.
+    # LoadImpact's own explanation: it's not calculated as expected. Start with the number of VU you want to run in
+    # your test, say 1501 and multiply with your factor, say 5 X. That's a sum of 7505. Divide by 500 and you
+    # have 15.01. You can' have .01 load generators so it will become 16. Always adjusted upwards when not divisible
+    # as a whole by 500.
 
     if not source_ip_multiplier or source_ip_multiplier < 2:
         source_ips = 0
@@ -84,25 +91,27 @@ def configure(id, users, warmup, stable=0, scenarios=None, source_ip_multiplier=
     update_failed = True
     for source_ips_iter in range(source_ips, MAX_SOURCE_IPS):
         try:
-            print("Attempt test_config.update() with source_ips %d" % (source_ips_iter))
+            print("Attempt test_config.update() with source_ips %d" % source_ips_iter)
             test_config.config[u'source_ips'] = source_ips_iter
             test_config.update()
             update_failed = False
             break
         except loadimpact.exceptions.BadRequestError:
-            print("Failed test_config.update() for source_ips %d" % (source_ips_iter))
+            print("Failed test_config.update() for source_ips %d" % source_ips_iter)
 
     if update_failed:
         exit('source_ips test_config.update() error')
 
-    test_config = liclient.client.get_test_config(id)
+    test_config = liclient.client.get_test_config(config_id)
     load_schedule = test_config.config['load_schedule']
 
-    print('==> Updated config %s' % (test_config.name))
+    print('==> Updated config %s' % test_config.name)
 
     for step in load_schedule:
         print('    Duration: %s  Users: %s' % (str(step['duration']).rjust(2), step['users']))
 
+
+# TODO: fix parameter 'test_config' value is not used
 def __configure_tracks(test_config, scenario_params):
     tracks = []
 
@@ -111,7 +120,8 @@ def __configure_tracks(test_config, scenario_params):
     for scenario_name in scenario_params:
         total_percent = scenario_params[scenario_name]['percent-of-users']
         if 'multi-regions' in scenario_params[scenario_name]:
-            region_percents = __distribute_percents(total_percent, ('use-alternative-regions' in scenario_params[scenario_name]))
+            region_percents = __distribute_percents(total_percent,
+                                                    ('use-alternative-regions' in scenario_params[scenario_name]))
         else:
             if 'region' in scenario_params[scenario_name]:
                 region_percents = {scenario_params[scenario_name]['region']: total_percent}
@@ -119,37 +129,36 @@ def __configure_tracks(test_config, scenario_params):
                 region_percents = {u'amazon:ie:dublin': total_percent}
 
         for region in region_percents:
-            track = {}
+            track = {u'loadzone': region}
             # track[u'loadzone'] = u'amazon:ie:dublin'
-            track[u'loadzone'] = region
-            clip = {}
-            clip[u'user_scenario_id'] = scenarios[scenario_name]['id']
-            clip[u'percent'] = region_percents[region]
+            clip = {u'user_scenario_id': scenarios[scenario_name]['id'], u'percent': region_percents[region]}
             track[u'clips'] = [clip]
             tracks.append(track)
     return tracks
+
 
 def __distribute_percents(total_percent, alternative_regions):
     if alternative_regions:
         possible_regions = [u"amazon:sg:singapore", u"amazon:au:sydney", u"amazon:jp:tokyo"]
     else:
         possible_regions = [u"amazon:ie:dublin", u"amazon:us:ashburn", u"amazon:us:portland", u"amazon:us:palo alto"]
-    if total_percent < 4: # too low to need distribution
+    if total_percent < 4:  # too low to need distribution
         return {possible_regions[0]: total_percent}
 
     total_regions = len(possible_regions)
     left = total_percent
-    slice = int(math.ceil(total_percent / float(total_regions)))
+    perc_per_region = int(math.ceil(total_percent / float(total_regions)))
     region_percents = {}
     for region_name in possible_regions:
-        current_slice = slice
-        if (left - slice) < 0:
+        current_slice = perc_per_region
+        if (left - perc_per_region) < 0:
             current_slice = left
         left = left - current_slice
         region_percents[region_name] = current_slice
     if left != 0:
-        raise ValueError("left is not 0 but %d" % (left))
+        raise ValueError("left is not 0 but %d" % left)
     return region_percents
+
 
 def show_configs():
     cols = ['CONFIG', 'ID']
