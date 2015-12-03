@@ -37,7 +37,7 @@ def scenariocmd(action, name):
     if action == "validate":
         if name:
             scenario_cfg = scenario.get(name)
-            code.validate(name, scenario_cfg['id'])
+            code.validate(scenario_cfg['id'])
         else:
             scenario.show_scenarios()
     elif action == "update":
@@ -69,8 +69,8 @@ def test_configcmd(name):
     if name:
         configs = test_config.get_configs()
         config = configs[name]
-        # TODO - Parameter 'run_id' value is not used
-        run_id = test_config.start(config['id'])
+        test_config.start(config['id'])
+        # run_id = test_config.start(config['id'])
         # config_report.start_report(run_id, name) # disabled dynamic reporting for now
     else:
         test_config.show_configs()

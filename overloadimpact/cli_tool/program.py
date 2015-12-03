@@ -70,7 +70,6 @@ def show_programs():
                 scenario_names.append("%s (%d%%)" % (scenario_name, users_percent))
             scenario_list_str = "(%s)" % (', '.join(scenario_names))
             rows.append(['', '_        scenarios:', scenario_list_str])
-            # TODO - fix parameter 'name' value is not used
             name = ''
         rows.append(['', '', '', '', ''])
 

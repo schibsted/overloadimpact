@@ -53,7 +53,6 @@ def get_last_data_store_versions():
         else:
             # overwrite if current entry is newer
             if versioned_data_stores[base_name].updated < data_store.updated:
-                # TODO - changed due to error "statement seems to have no effect". Is this change correct?
                 versioned_data_stores[base_name] = data_store
 
     # simplify result

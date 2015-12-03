@@ -36,7 +36,7 @@ def configure(config_id, users, warmup, stable=0, scenarios=None, source_ip_mult
     test_config.url = 'dummy'
     test_config.config['load_schedule'] = steps
     if scenarios:
-        test_config.config[u'tracks'] = __configure_tracks(test_config, scenarios)
+        test_config.config[u'tracks'] = __configure_tracks(scenarios)
     # specify source ips
 
     # LoadImpact's own explanation: it's not calculated as expected. Start with the number of VU you want to run in
@@ -111,8 +111,7 @@ def configure(config_id, users, warmup, stable=0, scenarios=None, source_ip_mult
         print('    Duration: %s  Users: %s' % (str(step['duration']).rjust(2), step['users']))
 
 
-# TODO: fix parameter 'test_config' value is not used
-def __configure_tracks(test_config, scenario_params):
+def __configure_tracks(scenario_params):
     tracks = []
 
     scenarios = scenario.get_scenarios()

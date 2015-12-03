@@ -413,8 +413,7 @@ def __find_sample_period(metrics):
             "end_row": clients_active[sample_period_stop_idx]}
 
 
-# TODO - fix parameter 'config_run' is not used
-def __make_charts(run_id, metrics, dest_dir, config_run):
+def __make_charts(run_id, metrics, dest_dir):
     flows_per_sec = __flows_per_sec(metrics)
     time_labels = report.make_time_labels(flows_per_sec['keys'])
     active_clients = __get_metric(CLIENTS_ACTIVE_KEY, metrics, 1)
@@ -492,8 +491,7 @@ def __scenario_app_page_metrics(scenario_name, metrics, scenario_config):
         return metrics[app_page_metric_id]
 
 
-# TODO - fix parameter 'scenerio_config' is not used
-def __scenario_core_action_metrics(scenario_name, metrics, scenario_config):
+def __scenario_core_action_metrics(scenario_name, metrics):
     scenario_id = scenario.get(scenario_name)["id"]
     metric_id = __core_actions_metric_id(scenario_id)
 
@@ -501,8 +499,7 @@ def __scenario_core_action_metrics(scenario_name, metrics, scenario_config):
     return sub_metrics
 
 
-# TODO - fix parameter 'scenerio_config' is not used
-def __correctness_metrics(scenario_name, metrics, scenario_config):
+def __correctness_metrics(scenario_name, metrics):
     scenario_id = scenario.get(scenario_name)["id"]
     metric_id = __correctness_metric_id(scenario_id, scenario_name)
 
@@ -511,7 +508,7 @@ def __correctness_metrics(scenario_name, metrics, scenario_config):
 
 
 def scenario_peak_core_actions_per_sec(scenario_name, metrics, scenario_config):
-    core_action_metrics = __scenario_core_action_metrics(scenario_name, metrics, scenario_config)
+    core_action_metrics = __scenario_core_action_metrics(scenario_name, metrics)
     if not core_action_metrics:
         return []
     sample_period_metrics = __extract_sample_metrics(core_action_metrics, metrics['sample_period'])
@@ -541,7 +538,7 @@ def __scenario_markup(scenario_name, scenario_config, metrics, dest_dir, run_id)
     peak_clients_avg = int(numpy.mean(peak_active_clients))
 
     # Get whole test period chart for actions/s
-    core_action_metrics = __scenario_core_action_metrics(scenario_name, metrics, scenario_config)
+    core_action_metrics = __scenario_core_action_metrics(scenario_name, metrics)
     actions_per_sec = __core_actions_per_sec(core_action_metrics, metrics, scenario_config)
     sub_metrics = actions_per_sec
     chart_title = "actions per sec"
@@ -576,7 +573,7 @@ def __scenario_markup(scenario_name, scenario_config, metrics, dest_dir, run_id)
                                  peak_actions_per_sec_avg, peak_clients_avg, sub_metrics, metrics, dest_dir, True)
 
     # Get whole test period chart for correctness
-    sub_metrics = __correctness_metrics(scenario_name, metrics, scenario_config)
+    sub_metrics = __correctness_metrics(scenario_name, metrics)
     chart_title = "correctness"
     y_label = "Correctness (1 = 100% correct)"
     markup += __chart_and_markup(chart_title, scenario_name, scenario_config, run_id, y_label, y_key,
@@ -625,7 +622,7 @@ def __chart_and_markup(title, scenario_name, scenario_config, run_id, y_label, y
 
 
 def __runtime_charts(run_id, metrics, config_run):
-    __make_charts(run_id, metrics, "runtime", config_run)
+    __make_charts(run_id, metrics, "runtime")
 
 
 def __get_timestamp_closest_value(ts_indexed_rows, needle_ts, value_name="value"):
@@ -655,8 +652,6 @@ def __clients_active_for_row(row, metrics):
     return closest_clients_active
 
 
-# TODO - fix parameter 'scenerio_config' is not used
-# TODO - fix parameter 'metrics' is not used
 def __core_actions_per_sec(sub_metrics, metrics, scenario_config):
     # TODO - fix warning "Statement seems to have no effect and can be replaced with function call to have effect"
     exit
@@ -705,7 +700,7 @@ def __complete_charts(run_id, metrics, title, config_run):
         title = ""
 
     subtitle = "Run " + repr(run_id) + ", " + report.get_start_time(metrics)
-    __make_charts(run_id, metrics, "complete", config_run)
+    __make_charts(run_id, metrics, "complete")
 
     f = open(complete_report_url(run_id), 'w')  # Trying to create a new file or open one
     f.write(__page_markup(title, subtitle, config_run, metrics, "complete", run_id))

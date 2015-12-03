@@ -153,11 +153,10 @@ def __get_validate_results(validation):
             print('%s [%s]: %s' % (result['offset'], result['timestamp'], result['message']))
     print("Validation completed with status '%s'"
           % (loadimpact.UserScenarioValidation.status_code_to_text(validation.status)))
-    __save_validation_results(validation, results)
+    __save_validation_results(validation)
 
 
-# TODO - fix parameter 'results' is not used
-def __save_validation_results(validation, results):
+def __save_validation_results(validation):
     ret = raw_get('user-scenario-validations/%s/results' % validation.id)
     save = '%s/scenario_validation_results/validation.%s.json' % (TEMP_DIR, validation.id)
     path = os.path.dirname(save)
@@ -176,9 +175,8 @@ def __save_validation_results(validation, results):
     print("Pretty print results with %s" % pretty_save)
 
 
-# TODO: fix parameter 'name' is not used
-def validate(name, scenerio_id):
-    user_scenario = liclient.client.get_user_scenario(scenerio_id)
+def validate(scenario_id):
+    user_scenario = liclient.client.get_user_scenario(scenario_id)
     __validate(user_scenario)
 
 
@@ -195,8 +193,8 @@ def __validate(user_scenario):
             pass
 
 
-def update(scenerio_id, name):
-    user_scenario = liclient.client.get_user_scenario(scenerio_id)
+def update(scenario_id, name):
+    user_scenario = liclient.client.get_user_scenario(scenario_id)
 
     versions = datastore.get_last_data_store_versions()
     code = __build_code(name, versions)
@@ -208,6 +206,6 @@ def update(scenerio_id, name):
 
     user_scenario.data_stores = new_data_stores
     user_scenario.update()
-    print '    Updated test scenario %i' % scenerio_id
+    print '    Updated test scenario %i' % scenario_id
     __validate(user_scenario)
-    print '    Validated test scenario %i' % scenerio_id
+    print '    Validated test scenario %i' % scenario_id

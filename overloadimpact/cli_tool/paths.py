@@ -21,9 +21,8 @@ def determine_suite_dir():
             return os.environ["OIMP_PROJECT_HOME"]
     print('OIMP_PROJECT dir not found. Set it as OIMP_PROJECT_HOME env var, or execute from it\'s root dir.\n'
           'You can set up a new project with: oimp setup_project [name] [destination path].')
-    return False
+
     # if we have executed this command from a oimp-suite dir then it will contain /lua/scenarios
-    # TODO - fix "This code is unreachable" error. Determine if the return False above is still needed.
     current_path = os.getcwd()
     if os.path.isdir(current_path + "/lua/scenarios"):
         return current_path

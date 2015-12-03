@@ -28,8 +28,6 @@ def get_start_time(metrics):
     return datetime.datetime.fromtimestamp(__to_secs(timestamp)).strftime("%Y-%m-%d %H:%M:%S")
 
 
-# TODO - fix Parameter 'metrics' value is not used
-# TODO - Parameter 'run_id' value is not used
 def make_time_chart(report_path, metrics, title, chart_name, run_id, y_label, rows, y_key, dest_dir,
                     display_active_clients, active_clients):
     chart = pygal_line()

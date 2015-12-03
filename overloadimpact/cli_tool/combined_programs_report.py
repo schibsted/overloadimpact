@@ -150,10 +150,7 @@ def __combined_target_chart(target_chart_scenarios, program_runs):
     chart.title = 'All scenarios: action/s - program comparison'
     # make entries
     data_sets = {}
-    # TODO: fix variable 'x_labels' in not used
-    x_labels = []
-    for set_name, set_values in sets.iteritems():
-        # TODO: is the set_values supposed to be used? If not then can just use sets.iterkeys().
+    for set_name in sets.iterkeys():
         data_sets[set_name] = {"data": []}
 
     shared_prefix = __shared_prefix(sets.keys())
@@ -164,7 +161,7 @@ def __combined_target_chart(target_chart_scenarios, program_runs):
         else:
             shortened_set_name = set_name
         set_title = shortened_set_name
-        data_sets[set_name]["title"] = {"title": set_title, "data": []}
+        data_sets[set_name]["title"] = set_title
 
     x_labels = []
     for scenario_name in target_chart_scenarios:
@@ -174,8 +171,7 @@ def __combined_target_chart(target_chart_scenarios, program_runs):
     # arrange data arrays according to sorted scenario_names
     for scenario_name in x_labels:
         for set_name, _set in sets.iteritems():
-            # TODO - fix "Local variable 'program_run_name' might be referenced before assignment"
-            if (scenario_name in sets[program_run_name]) and (scenario_name in _set):
+            if scenario_name in _set:
                 data_sets[set_name]["data"].append(_set[scenario_name])
             else:
                 data_sets[set_name]["data"].append(None)
